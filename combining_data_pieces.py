@@ -3,7 +3,7 @@ import os
 import glob
 
 # replace with your folder's path
-folder_path = r'.'
+folder_path = r'./datasets/ava_frame/'
 
 all_files = os.listdir(folder_path)
 
@@ -41,7 +41,7 @@ big_df.to_csv(os.path.join(folder_path, 'ava_frame_dataset.csv'), index=False)
 
 for row in big_df:
     print(row)
-    pictures = glob.glob(f'url_{row['url_id']}_sec{row['Second']}.jpg')
+    pictures = glob.glob(f'./datasets/ava_frame/frames/url_{row['url_id']}_sec{row['Second']}.jpg')
     if pictures:
         print('Trovato')
     else:
@@ -54,7 +54,7 @@ print(npfiles)
 all_arrays = []
 for npfile in npfiles:
     print(npfile)
-    a = np.load(os.path.join('./', npfile))
+    a = np.load(os.path.join('./datasets/ava_frame/annotations/', npfile))
     all_arrays.append(a)
     print(all_arrays)
 all_array = np.array(all_arrays)
