@@ -34,6 +34,8 @@ def arg_parser():
     parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                         help='evaluate model on validation set')
 
+    parser.add_argument('--single_image', type=str, help='single image for inference')
+
     # cfg file
     parser.add_argument('--config_file', dest='config_file', type=str, help='network config file path')
     parser.add_argument('--dataset_config_file', dest='dataset_config_file', type=str, help='network config file path')
