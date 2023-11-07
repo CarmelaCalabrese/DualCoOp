@@ -27,7 +27,7 @@ def frame_extraction (url_id, second, name):
 
         if ret:
             # Save the extracted frame as an image
-            cv2.imwrite(f'./frames_value2/{name}.jpg', frame)
+            cv2.imwrite(f'./datasets/ava_frame/frames_value2/{name}.jpg', frame)
         else:
             print("Frame extraction failed.")
 
@@ -37,16 +37,17 @@ def frame_extraction (url_id, second, name):
     except Exception as e:
         print(f"An error occurred for {url_id}-{second}: {e}")
 
-our_dataset = pd.read_csv('./output_values2.csv')
+our_dataset = pd.read_csv('./datasets/ava_frame/output_values2.csv')
 
 print('Estraggo')
 annotations= []
 for index, row in our_dataset.iterrows():
-    if index<1280:
-        continue
     print('index')
     print(index)
-    frame_extraction(row['url_id'], row['Second'], f'url_{index}')
+    url_id = row['url_id']
+    second = row['Second']
+    name = f'url_{url_id}_sec_{second}'
+    frame_extraction(url_id, second, name)
     ann_vec = [0]*80
     actions_lab = row['Actions_id']
     actions_lab = [int(x) for x in actions_lab.replace('[','').replace(']','').split()]
@@ -58,5 +59,5 @@ for index, row in our_dataset.iterrows():
     annotations.append(ann_vec)
 
 print(annotations)
-np.save('./frames_value1/annotations_values2.npy', annotations)
+np.save('./datasets/ava_frame/frames_value2/annotations_values2.npy', annotations)
 print('finito')
