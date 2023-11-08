@@ -5,7 +5,7 @@ import json
 import ast
 import numpy as np
 
-def frame_extraction (url_id, second, name):
+def frame_extraction (url_id, second, name, number):
 
     try:
         # Replace 'VIDEO_URL' with the URL of the YouTube video
@@ -27,7 +27,7 @@ def frame_extraction (url_id, second, name):
 
         if ret:
             # Save the extracted frame as an image
-            cv2.imwrite(f'./datasets/ava_frame/frames_value2/{name}.jpg', frame)
+            cv2.imwrite(f'./datasets/ava_frame/frames_value{number}/{name}.jpg', frame)
         else:
             print("Frame extraction failed.")
 
@@ -37,27 +37,30 @@ def frame_extraction (url_id, second, name):
     except Exception as e:
         print(f"An error occurred for {url_id}-{second}: {e}")
 
-our_dataset = pd.read_csv('./datasets/ava_frame/output_values2.csv')
+for number  in range(6,13):
+    print(f'Estraggo: ./datasets/ava_frame/output_values{number}.csv')
+    our_dataset = pd.read_csv(f'./datasets/ava_frame/output_values{number}.csv')
+    annotations= []
+    for index, row in our_dataset.iterrows():
+        #if index<3317:
+        #    continue
+        print('index')
+        print(index)
+        url_id = row['url_id']
+        second = row['Second']
+        name = f'url_{url_id}_sec_{second}'
+        frame_extraction(url_id, second, name, number)
+        ann_vec = [0]*80
+        actions_lab = row['Actions_id']
+        actions_lab = [int(x) for x in actions_lab.replace('[','').replace(']','').split()]
+        print('Actions idx:')
+        for idx, val in enumerate(actions_lab):
+            print(val)
+            ann_vec[int(val)-1] = 1
+         #print(ann_vec)
+        annotations.append(ann_vec)
 
-print('Estraggo')
-annotations= []
-for index, row in our_dataset.iterrows():
-    print('index')
-    print(index)
-    url_id = row['url_id']
-    second = row['Second']
-    name = f'url_{url_id}_sec_{second}'
-    frame_extraction(url_id, second, name)
-    ann_vec = [0]*80
-    actions_lab = row['Actions_id']
-    actions_lab = [int(x) for x in actions_lab.replace('[','').replace(']','').split()]
-    print('Actions idx:')
-    for idx, val in enumerate(actions_lab):
-        print(val)
-        ann_vec[int(val)-1] = 1
-    #print(ann_vec)
-    annotations.append(ann_vec)
-
-print(annotations)
-np.save('./datasets/ava_frame/frames_value2/annotations_values2.npy', annotations)
-print('finito')
+    print(annotations)
+    np.save(f'./datasets/ava_frame/frames_value{number}/annotations_values{number}.npy', annotations)
+    print(f'finito {number}')
+print('Finito')

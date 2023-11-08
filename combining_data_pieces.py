@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import glob
+import numpy as np
 
 # replace with your folder's path
 folder_path = r'./datasets/ava_frame/'
@@ -38,15 +39,23 @@ big_df = pd.concat(df_list, ignore_index=True)
 # Save the final result to a new CSV file
 big_df.to_csv(os.path.join(folder_path, 'ava_frame_dataset.csv'), index=False)
 
+#print('Originale')
+#print(big_df)
 
-for row in big_df:
-    print(row)
-    pictures = glob.glob(f'./datasets/ava_frame/frames/url_{row['url_id']}_sec{row['Second']}.jpg')
-    if pictures:
-        print('Trovato')
-    else:
-        big_df.drop(row) 
+for idx, row in big_df.iterrows():
+    if idx<1:
+        print(row)
+        continue
+    #print(row)
+    url_id = row['url_id']
+    sec = row['Second']
+    pictures = glob.glob(f'./datasets/ava_frame/frames/url_{url_id}_sec_{sec}.jpg')
+    if not pictures:
+        big_df.drop(idx, axis=0, inplace = True) 
 
+print('Filtrato')
+print(big_df)
+big_df.to_csv(os.path.join(folder_path, 'ava_frame_filtered_dataset.csv'), index=False)
 
 npfiles = ['annotations_values1.npy', 'annotations_values2.npy', 'annotations_values3.npy', 'annotations_values4.npy', 'annotations_values5.npy', 'annotations_values6.npy', 
             'annotations_values7.npy', 'annotations_values8.npy', 'annotations_values9.npy', 'annotations_values10.npy', 'annotations_values11.npy', 'annotations_values12.npy']
