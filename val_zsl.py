@@ -16,6 +16,10 @@ def main():
     args = parser.parse_args()
     cfg = setup_cfg(args)
 
+    print('cfg')
+    print(cfg.DATASET.ZS_TEST)
+    print(cfg.DATASET.ZS_TEST_UNSEEN)
+
     test_split = cfg.DATASET.TEST_SPLIT
     test_gzsi_dataset = build_dataset(cfg, test_split, cfg.DATASET.ZS_TEST)
     test_gzsi_cls_id = test_gzsi_dataset.cls_id

@@ -22,9 +22,9 @@ def main():
     cfg = setup_cfg(args)
 
     # building the train, val and test dataloaders
-    train_split = cfg.DATASET.TRAIN_GZSL_SPLIT
+    train_split = cfg.DATASET.TRAIN_SPLIT
     val_gzsl_split = cfg.DATASET.VAL_GZSL_SPLIT
-    train_dataset = build_dataset(cfg, train_split, cfg.DATASET.TRAIN_GZSL_SPLIT)
+    train_dataset = build_dataset(cfg, train_split, cfg.DATASET.TRAIN_SPLIT)
     train_cls_id = train_dataset.cls_id
     val_gzsi_dataset = build_dataset(cfg, val_gzsl_split, cfg.DATASET.VAL_GZSL_SPLIT)
     val_gzsi_cls_id = val_gzsi_dataset.cls_id

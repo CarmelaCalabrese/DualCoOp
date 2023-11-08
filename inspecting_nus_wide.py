@@ -24,21 +24,24 @@ img_list_name = {'train': 'formatted_train_images_filtered.npy',
 
 annFile = os.path.join('./datasets/nus_wide/annotations', 'zsl', ann_file_names[data_split])
 prova= np.load(annFile)
-res = [idx for idx, val in enumerate(prova[10]) if val != 0]
-res2 = [val for idx, val in enumerate(prova[10]) if val != 0]
+#print(prova)
+#print(len(prova))
+#print(len(prova[0]))
+#res = [idx for idx, val in enumerate(prova[10]) if val != 0]
+#res2 = [val for idx, val in enumerate(prova[10]) if val != 0]
  
 # printing result
-print("Indices of Non-Zero elements : " + str(res))
-print("Values of Non-Zero elements : " + str(res2))
+#print("Indices of Non-Zero elements : " + str(res))
+#print("Values of Non-Zero elements : " + str(res2))
 
 
 cls_id = pickle.load(open(os.path.join('./datasets/nus_wide/annotations', 'zsl', "cls_id.pickle"), "rb"))
 print('*****cls_id*****')
-#print(cls_id)
+print(cls_id)
 
 cls_id = cls_id['seen']
 print('*****seen*****')
-#print(len(cls_id))
+print(len(cls_id))
 
 cls_id = pickle.load(open(os.path.join('./datasets/nus_wide/annotations', 'zsl', "cls_id.pickle"), "rb"))
 cls_id = cls_id['unseen']
@@ -47,7 +50,7 @@ print('*****unseen*****')
 
 cls_id = pickle.load(open(os.path.join('./datasets/nus_wide/annotations', 'zsl', "cls_id.pickle"), "rb"))            
 cls_id = list(range(1006))
-#print('*****zsl*****')
+print('*****zsl*****')
 #print(cls_id)
 
 image_list = os.path.join('./datasets/nus_wide/annotations', 'zsl', img_list_name[data_split])
