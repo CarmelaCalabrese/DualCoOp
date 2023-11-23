@@ -24,9 +24,11 @@ def main():
     # building the train, val and test dataloaders
     train_split = cfg.DATASET.TRAIN_SPLIT
     val_gzsl_split = cfg.DATASET.VAL_GZSL_SPLIT
-    train_dataset = build_dataset(cfg, train_split, cfg.DATASET.TRAIN_SPLIT)
+    #train_dataset = build_dataset(cfg, train_split, cfg.DATASET.TRAIN_SPLIT)
+    train_dataset = build_dataset(cfg, train_split, "")
     train_cls_id = train_dataset.cls_id
-    val_gzsi_dataset = build_dataset(cfg, val_gzsl_split, cfg.DATASET.VAL_GZSL_SPLIT)
+    #val_gzsi_dataset = build_dataset(cfg, val_gzsl_split, cfg.DATASET.VAL_GZSL_SPLIT)
+    val_gzsi_dataset = build_dataset(cfg, val_gzsl_split, "")
     val_gzsi_cls_id = val_gzsi_dataset.cls_id
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE,
                                              shuffle=cfg.DATALOADER.TRAIN_X.SHUFFLE,
@@ -35,10 +37,13 @@ def main():
                                                   shuffle=cfg.DATALOADER.VAL.SHUFFLE,
                                                   num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
     classnames = train_dataset.classnames
+    print(classnames)
     cls_id = {'train': train_cls_id, 'val': val_gzsi_cls_id}
+    print(cls_id)
 
     test_gzsl_split = cfg.DATASET.TEST_GZSL_SPLIT
-    test_gzsi_dataset = build_dataset(cfg, test_gzsl_split, cfg.DATASET.TEST_GZSL_SPLIT)
+    #test_gzsi_dataset = build_dataset(cfg, test_gzsl_split, cfg.DATASET.TEST_GZSL_SPLIT)
+    test_gzsi_dataset = build_dataset(cfg, test_gzsl_split, "")
     test_gzsi_cls_id = test_gzsi_dataset.cls_id
     test_gzsi_loader = torch.utils.data.DataLoader(test_gzsi_dataset, batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
                                                   shuffle=cfg.DATALOADER.TEST.SHUFFLE,

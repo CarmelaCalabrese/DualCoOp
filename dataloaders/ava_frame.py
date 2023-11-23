@@ -26,19 +26,18 @@ class AVA_ZSL(data.Dataset):
         with open(class_name_files) as f:
             classnames = f.readlines()
         self.classnames = [a.strip() for a in classnames]
-        print(self.classnames)
+        #print(self.classnames)        
 
+        print(annFile)
         if annFile == "":
             annFile = os.path.join(self.root, 'annotations', ann_file_names[data_split])
-        else:
-            raise NotImplementedError
+        #else:
+        #    raise NotImplementedError
         cls_id = pickle.load(open(os.path.join(self.root, 'annotations', "cls_id.pkl"), "rb"))
         if data_split == 'train':
             cls_id = cls_id['seen']
         elif data_split in ['val', 'test']:
-            cls_id = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 20, 22, 24, 26, 27, 28, 
-                    29, 30, 34, 36, 37, 38, 41, 43, 45, 46, 47, 48, 49, 51, 52, 54, 56, 57, 58, 
-                    59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 72, 73, 74, 76, 77, 78, 79, 80]
+            cls_id = range(80)
         else:
             raise ValueError
         self.cls_id = cls_id
@@ -46,6 +45,8 @@ class AVA_ZSL(data.Dataset):
         image_list = os.path.join(self.root, 'annotations', img_list_name[data_split])
         image_csv = pd.read_csv(image_list)
         self.image_list = image_csv
+
+        print(image_csv)
 
         #self.image_list = np.load(image_list) 
         #assert len(self.anns) == len(self.image_list) #controlla che ci siano tutte le annotazioni per ogni immagine
@@ -103,8 +104,8 @@ class AVA_ZSL(data.Dataset):
 
     def __getitem__(self, index):
         img_id = self.ids[index]
-        url_id = image_list[img_id]['url_id']
-        sec = image_list[img_id]['Second']
+        url_id = self.image_list.iloc[img_id]['url_id']
+        sec = self.image_list.iloc[img_id]['Second']
         frame_name= f'url_{url_id}_sec_{sec}.jpg'
         img_path = os.path.join(self.root, 'frames', frame_name)
         img = Image.open(img_path).convert('RGB')
