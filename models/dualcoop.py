@@ -213,6 +213,9 @@ class DualCoop(nn.Module):
 
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
         self.image_encoder = clip_model.visual
+        self.video_encoder = clip_model.visual
+        print('self.video_encoder')
+        print(self.video_encoder)
         self.text_encoder = TextEncoder(clip_model)
         self.logit_scale = cfg.TRAINER.COOP_MLC.LS
         self.dtype = clip_model.dtype
@@ -224,12 +227,17 @@ class DualCoop(nn.Module):
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
 
+        # get video features
+        #video_features, ? = self.video_encoder(?)
+
         # normalize features
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
         image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
+        #video_features /= video_features.norm(dim=-1, keepdim=True)
 
         # Class-Specific Region Feature Aggregation
         output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])
+        #output = 20 * F.conv1d(video_features_norm, text_features[:, :, None])
         b, c, _ = output.shape
         output_half = output[:,  c // 2:]
         w_half = F.softmax(output_half, dim=-1)
