@@ -3,12 +3,14 @@ from .coco_detection import CocoDetection
 from .nus_wide import NUSWIDE_ZSL
 from .pascal_voc import voc2007
 from .ava_frame import AVA_ZSL
+from .ssv2 import Ssv2
 
 MODEL_TABLE = {
     'coco': CocoDetection,
     'nus_wide_zsl': NUSWIDE_ZSL,
     'voc2007': voc2007,
-    'ava_frame': AVA_ZSL
+    'ava_frame': AVA_ZSL,
+    'ssv2': Ssv2
 }
 
 
