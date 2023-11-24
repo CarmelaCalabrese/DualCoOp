@@ -14,14 +14,29 @@ from dassl.optim import build_optimizer, build_lr_scheduler
 from utils.trainers import train_coop
 from utils.helper import save_checkpoint
 
+from openvclip_code.config.my_defaults import assert_and_infer_cfg
+from openvclip_code.utils.parser import load_config
+
 
 def main():
     global args
     parser = arg_parser()
     args = parser.parse_args()
+
+    #OpenVCLIP
+    cfg = load_config(args, args.cfg_files[0])
+    cfg = assert_and_infer_cfg(cfg)
+
+    print(cfg)
+
+    #DualCoop
     cfg = setup_cfg(args)
 
-    # building the train and val dataloaders
+    print(cfg)
+
+    #CARMELA: come faccio il merging dei due cfg?
+
+    # building the train and val dataloaders #CARMELA: da fare per ssv2
     train_split = cfg.DATASET.TRAIN_SPLIT
     val_split = cfg.DATASET.VAL_SPLIT
     val_gzsl_split = cfg.DATASET.VAL_GZSL_SPLIT
@@ -84,15 +99,6 @@ def main():
         attn_group = {'params': attn_params, 'lr': cfg.OPTIM.LR * cfg.OPTIM.ATTN_LR_MULT}
         sgd_polices.append(attn_group)
 
-    # if cfg.TRAINER.FINETUNE_TEXT:
-    #     try:
-    #         text_params = model.text_params()
-    #     except:
-    #         text_params = model.module.text_params()
-    #     print('num of params in text layer: ', len(text_params))
-    #     text_group = {'params': text_params, 'lr': cfg.OPTIM.LR * cfg.OPTIM.TEXT_LR_MULT}
-    #     sgd_polices.append(text_group)
-
     optim = torch.optim.SGD(sgd_polices, lr=cfg.OPTIM.LR,
                                 momentum=cfg.OPTIM.MOMENTUM,
                                 weight_decay=cfg.OPTIM.WEIGHT_DECAY,
@@ -125,8 +131,6 @@ def main():
         print(model, file=logfile, flush=True)
 
     if args.auto_resume:
-        # checkpoint_path = os.path.join(log_folder, 'checkpoint.pth.tar')
-        # if os.path.exists(checkpoint_path):
         args.resume = os.path.join(log_folder, 'checkpoint.pth.tar')
 
     best_unseen_F1 = 0

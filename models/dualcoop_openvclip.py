@@ -2,13 +2,15 @@ import torch
 import torch.nn as nn
 
 from clip import clip
+from openvclip import clip as openvclip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 from copy import deepcopy
+from openvclip_code.loading import load_openvclip
 import torch.nn.functional as F
 
 _tokenizer = _Tokenizer()
 
-__all__ = ['dualcoop', 'DualCoop']
+__all__ = ['dualcoop_openvclip', 'DualCoop_openvclip']
 
 
 def load_clip_to_cpu(cfg):
@@ -23,8 +25,8 @@ def load_clip_to_cpu(cfg):
 
     except RuntimeError:
         state_dict = torch.load(model_path, map_location="cpu")
-    model = clip.build_model_conv_proj(state_dict or model.state_dict(), cfg)
 
+    model = clip.build_model_conv_proj(state_dict or model.state_dict(), cfg)
     return model
 
 
@@ -205,39 +207,43 @@ class MLCPromptLearner(nn.Module):
         return prompts, tokenized_prompts
 
 
-class DualCoop(nn.Module):
-    def __init__(self, cfg, classnames, clip_model):
+class DualCoop_openvclip(nn.Module):
+    def __init__(self, cfg, classnames, clip_model, openvclip_model):
         super().__init__()
         self.visual_encoder_type = cfg.MODEL.BACKBONE.NAME
         self.prompt_learner = MLCPromptLearner(cfg, classnames, clip_model)
-
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
+
         self.image_encoder = clip_model.visual
-        self.video_encoder = clip_model.visual #CARMELA ADDED
+        print('self.image_encoder')
+        print(self.image_encoder)
+
+        self.video_encoder = openvclip_model.visual #CARMELA ADDED
         print('self.video_encoder')
         print(self.video_encoder)
+        
         self.text_encoder = TextEncoder(clip_model)
         self.logit_scale = cfg.TRAINER.COOP_MLC.LS
         self.dtype = clip_model.dtype
         self.cfg = cfg
 
     def forward(self, image, cls_id=None):
-        # get image and text features
-        image_features, attn_weights = self.image_encoder(image.type(self.dtype))
+        # get image features
+        image_features, attn_weights = self.image_encoder(image.type(self.dtype)) #where do they use attn_weights? Maybe for gradCAM
+        # get video features
+        video_features = self.video_encoder(image.type(self.dtype)) #CARMELA ADDED
+        # get text features
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
-
-        # get video features
-        #video_features, ? = self.video_encoder(?) #CARMELA ADDED
 
         # normalize features
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
         image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
-        #video_features /= video_features.norm(dim=-1, keepdim=True) #CARMELA ADDED
+        video_features_norm /= video_features.norm(dim=-1, keepdim=True) #CARMELA ADDED
 
         # Class-Specific Region Feature Aggregation
         output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])
-        #output = 20 * F.conv1d(video_features_norm, text_features[:, :, None]) #CARMELA ADDED
+        output = 20 * F.conv1d(video_features_norm, text_features[:, :, None]) #CARMELA ADDED
         b, c, _ = output.shape
         output_half = output[:,  c // 2:]
         w_half = F.softmax(output_half, dim=-1)
@@ -254,7 +260,7 @@ class DualCoop(nn.Module):
     @property
     def network_name(self):
         name = ''
-        name += 'DualCoop-{}'.format(self.visual_encoder_type)
+        name += 'DualCoop-Openvclip-{}'.format(self.visual_encoder_type)
         return name
 
     def backbone_params(self):
@@ -280,14 +286,15 @@ class DualCoop(nn.Module):
         return params
 
 
-def dualcoop(cfg, classnames, **kwargs):
+def dualcoop_openvclip(cfg, classnames, **kwargs):
     print(f"Loading CLIP (backbone: {cfg.MODEL.BACKBONE.NAME})")
     clip_model = load_clip_to_cpu(cfg)
-
     clip_model.float()
 
-    print("Building dualcoop")
-    model = DualCoop(cfg, classnames, clip_model)
+    openvclip_model = load_openvclip(cfg)
+
+    print("Building dualcoop_openvclip")
+    model = DualCoop_openvclip(cfg, classnames, clip_model, openvclip_model)
 
     if not cfg.TRAINER.FINETUNE_BACKBONE:
         print('Freeze the backbone weights')
@@ -314,3 +321,4 @@ def dualcoop(cfg, classnames, **kwargs):
         print(f"Multiple GPUs detected (n_gpus={device_count}), use all of them!")
         model = nn.DataParallel(model)
     return model
+

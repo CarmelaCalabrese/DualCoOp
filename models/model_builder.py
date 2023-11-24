@@ -1,4 +1,4 @@
-from . import (dualcoop)
+from . import (dualcoop, dualcoop_openvclip)
 
 def build_model(cfg, args, classnames):
     """
@@ -9,7 +9,8 @@ def build_model(cfg, args, classnames):
         network model
         architecture name
     """
-    model = dualcoop(cfg, classnames)
+    #model = dualcoop(cfg, classnames)
+    model = dualcoop_openvclip(cfg, classnames)
     network_name = model.network_name if hasattr(model, 'network_name') else cfg.MODEL.BACKBONE.NAME
     arch_name = "{dataset}-{arch_name}".format(
         dataset=cfg.DATASET.NAME, arch_name=network_name)
