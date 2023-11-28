@@ -9,8 +9,8 @@ from itertools import chain as chain
 import torch
 import torch.utils.data
 
-import slowfast.utils.logging as logging
-from slowfast.utils.env import pathmgr
+import openvclip_code.utils.logging as logging
+from openvclip_code.utils.env import pathmgr
 
 from . import utils as utils
 from .build import DATASET_REGISTRY

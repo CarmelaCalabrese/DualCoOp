@@ -25,15 +25,16 @@ def main():
 
     #OpenVCLIP
     # Dual coop and openvclip do not share the same cfg file name, check arg_parser
-    openvclip_cfg = load_config(args, args.cfg_files[0])
+    openvclip_cfg = load_config(args)
     openvclip_cfg = assert_and_infer_cfg(openvclip_cfg)
 
-    print(openvclip_cfg)
+    print('Ho parsato openvclip')
+    #print(openvclip_cfg)
 
     #DualCoop
     cfg = setup_cfg(args)
-
-    print(cfg)
+    print('Ho parsato Dualcoop')
+    #print(cfg)
 
     #CARMELA: come faccio il merging dei due cfg?
 
