@@ -146,7 +146,7 @@ def arg_parser():
         type=str,
     )
     parser.add_argument(
-        "--cfg",
+        "--openvclip_cfg",
         dest="cfg_files",
         help="Path to the config files",
         default=["configs/Kinetics/SLOWFAST_4x16_R50.yaml"],

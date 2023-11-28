@@ -6,8 +6,8 @@
 import argparse
 import sys
 
-import slowfast.utils.checkpoint as cu
-from slowfast.config.defaults import get_cfg
+import openvclip_code.utils.checkpoint as cu
+from openvclip_code.config.defaults import get_cfg
 
 
 def parse_args():

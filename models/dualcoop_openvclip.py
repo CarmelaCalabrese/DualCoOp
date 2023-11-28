@@ -286,12 +286,12 @@ class DualCoop_openvclip(nn.Module):
         return params
 
 
-def dualcoop_openvclip(cfg, classnames, **kwargs):
+def dualcoop_openvclip(cfg, openvclip_cfg, classnames, **kwargs):
     print(f"Loading CLIP (backbone: {cfg.MODEL.BACKBONE.NAME})")
     clip_model = load_clip_to_cpu(cfg)
     clip_model.float()
 
-    openvclip_model = load_openvclip(cfg)
+    openvclip_model = load_openvclip(openvclip_cfg)
 
     print("Building dualcoop_openvclip")
     model = DualCoop_openvclip(cfg, classnames, clip_model, openvclip_model)
