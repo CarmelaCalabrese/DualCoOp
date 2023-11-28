@@ -25,6 +25,7 @@ logger = logging.get_logger(__name__)
 
 @torch.no_grad()
 
+#TODO: the following cfg needs to be openvclip cfg
 def load_openvclip(cfg):
 
     """

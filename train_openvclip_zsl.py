@@ -14,7 +14,7 @@ from dassl.optim import build_optimizer, build_lr_scheduler
 from utils.trainers import train_coop
 from utils.helper import save_checkpoint
 
-from openvclip_code.config.my_defaults import assert_and_infer_cfg
+from openvclip_code.config.defaults import assert_and_infer_cfg
 from openvclip_code.utils.parser import load_config
 
 
@@ -24,10 +24,11 @@ def main():
     args = parser.parse_args()
 
     #OpenVCLIP
-    cfg = load_config(args, args.cfg_files[0])
-    cfg = assert_and_infer_cfg(cfg)
+    # Dual coop and openvclip do not share the same cfg file name, check arg_parser
+    openvclip_cfg = load_config(args, args.cfg_files[0])
+    openvclip_cfg = assert_and_infer_cfg(openvclip_cfg)
 
-    print(cfg)
+    print(openvclip_cfg)
 
     #DualCoop
     cfg = setup_cfg(args)
@@ -73,7 +74,7 @@ def main():
 
 
     # build the model
-    model, arch_name = build_model(cfg, args, classnames)
+    model, arch_name = build_model(cfg, args, classnames, openvclip_cfg=openvclip_cfg)
     try:
         prompt_params = model.prompt_params()
     except:

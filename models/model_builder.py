@@ -1,6 +1,6 @@
 from . import (dualcoop, dualcoop_openvclip)
 
-def build_model(cfg, args, classnames):
+def build_model(cfg, args, classnames, openvclip_cfg=None):
     """
     Args:
         args: all options defined in opts.py and num_classes
@@ -10,7 +10,7 @@ def build_model(cfg, args, classnames):
         architecture name
     """
     #model = dualcoop(cfg, classnames)
-    model = dualcoop_openvclip(cfg, classnames)
+    model = dualcoop_openvclip(cfg, openvclip_cfg, classnames)
     network_name = model.network_name if hasattr(model, 'network_name') else cfg.MODEL.BACKBONE.NAME
     arch_name = "{dataset}-{arch_name}".format(
         dataset=cfg.DATASET.NAME, arch_name=network_name)
