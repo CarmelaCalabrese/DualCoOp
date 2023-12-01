@@ -1,0 +1,3 @@
+[submodule "Open-VCLIP"]
+	path = Open-VCLIP
+	url = https://github.com/wengzejia1/Open-VCLIP.git

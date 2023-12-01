@@ -14,8 +14,8 @@ from dassl.optim import build_optimizer, build_lr_scheduler
 from utils.trainers import train_coop
 from utils.helper import save_checkpoint
 
-from openvclip_code.config.defaults import assert_and_infer_cfg
-from openvclip_code.utils.parser import load_config
+from slowfast.config.defaults import assert_and_infer_cfg
+from slowfast.utils.parser import load_config
 
 
 def main():

@@ -9,16 +9,16 @@ import pickle
 import torch
 from pytorchvideo.layers.distributed import get_local_rank
 
-import openvclip_code.utils.checkpoint as cu
-import openvclip_code.utils.distributed as du
-import openvclip_code.utils.logging as logging
-import openvclip_code.utils.misc as misc
-import openvclip_code.visualization.tensorboard_vis as tb
-from openvclip_code.datasets import loader
-from openvclip_code.models import build_model
-from openvclip_code.utils.env import pathmgr
-from openvclip_code.utils.meters import AVAMeter, TestMeter
-from openvclip_code.utils.env import pathmgr
+import slowfast.utils.checkpoint as cu
+import slowfast.utils.distributed as du
+import slowfast.utils.logging as logging
+import slowfast.utils.misc as misc
+import slowfast.visualization.tensorboard_vis as tb
+from slowfast.datasets import loader
+from slowfast.models import build_model
+from slowfast.utils.env import pathmgr
+from slowfast.utils.meters import AVAMeter, TestMeter
+from slowfast.utils.env import pathmgr
 
 logger = logging.get_logger(__name__)
 

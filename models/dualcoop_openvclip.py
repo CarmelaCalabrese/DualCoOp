@@ -5,7 +5,7 @@ from clip import clip
 from openvclip import clip as openvclip
 from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 from copy import deepcopy
-from openvclip_code.loading import load_openvclip
+from slowfast.loading import load_openvclip
 import torch.nn.functional as F
 
 _tokenizer = _Tokenizer()
