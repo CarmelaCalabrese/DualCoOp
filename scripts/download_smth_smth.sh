@@ -1,13 +1,36 @@
 #!/bin/bash
 
-#  A script to download something something dataset, provided that you can authenticate
+#  A script to download something something dataset, prsovided that you can authenticate to qualcomm webpage
 
+while getopts ":p" option
+do
+    case "${option}" in
+        p) 
+            echo "User selected partial download"
+            PARTIAL=true;;
+        ?)
+            echo "Usage cat cookie.txt | ./test.sh [-p] <cookie>";;
+    esac
+done
+
+
+read -p "Input auth cookie: " COOKIE
 BASE_URL='https://developer.qualcomm.com/qfile/'
+URL_LABELS='https://developer.qualcomm.com/qfile/68943/20bn-something-something-download-package-labels.zip'
 URL_QFILE=68975
 BASE_OUTPUT='something-something-v2-'
 OUT_DIR='something-something-v2'
-COOKIE='OptanonAlertBoxClosed=2023-11-23T10:04:53.334Z; s_fid=3875BB3C49B4C5A5-1B4936EB13644AF1; INGRESSCOOKIE=1701251952.12.378.150686|b1b41e039a516dae4a16dde1372167d1; s_cc=true; s_sq=%5B%5BB%5D%5D; SESSe9b825fe435fd0ce0540e1ea73912b52=XVkl3y6OeAw2u2IskfGZ-d21XPdG7zIJm9F7ASorHG8; OneTrustActiveGroups=,C0001,; utag_main=v_id:018a600b733a0011f7ce645844c305065004705d00fb8$_sn:5$_se:15$_ss:0$_st:1701254162449$vapi_domain:qualcomm.com$ses_id:1701251965184%3Bexp-session$_pn:7%3Bexp-session; OptanonConsent=isGpcEnabled=0&datestamp=Wed+Nov+29+2023+11%3A06%3A02+GMT%2B0100+(Central+European+Standard+Time)&version=202310.1.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=9fc9fa71-91af-421b-a74c-ddc0cc47d007&interactionCount=2&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A0%2CC0003%3A0%2CC0004%3A0&geolocation=IT%3B42&AwaitingReconsent=false'
 BASE_REFERER='https://developer.qualcomm.com/downloads/20bn-something-something-download-package-'
+SEQ_END=19
+LABELS_FILE=labels.zip
+
+echo $COOKIE
+
+if [ "${PARTIAL}" = true ]
+then
+    echo "Starting partial download"
+    SEQ_END=0
+fi
 
 url() {
   echo ${BASE_URL}$1"/20bn-something-something-v2-"$2
@@ -56,10 +79,11 @@ download_smth_smth() {
 
 mkdir -p $OUT_DIR
 
-for i in $(seq 0 19)
+download_smth_smth $URL_LABELS $LABELS_FILE
+
+for i in $(seq 0 ${SEQ_END})
 do
 
-  echo $URL_QFILE
   if [[ $i -lt 10 ]]
   then
     URL=$(url $URL_QFILE "0${i}.zip")
@@ -75,5 +99,7 @@ do
 
 done
 
+cd $OUT_DIR
+unzip $LABELS_FILE
 unzip something-something-v2-\*.zip
 cat 20bn-something-something-v2-?? | tar -xvzf -

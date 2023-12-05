@@ -14,10 +14,11 @@ cd $SMTH_SMTH_DIR
 VIDEO_DIR="20bn-something-something-v2"
 cd $VIDEO_DIR
 
+# Be aware that this is painfully slow
 for VIDEO in $(ls)
 do
     VIDEO_NUM=$( echo ${VIDEO} | cut -d '.' -f1) 
     mkdir -p ${VIDEO_NUM} 
-    ffmpeg -i ${VIDEO} -r 30 -q:v 1 ${VIDEO_NUM}/${VIDEO_NUM}_%03d.jpg
+    ffmpeg -i ${VIDEO} -r 30 -q:v 1 ${VIDEO_NUM}/${VIDEO_NUM}_%03d.jpg 
     mv ${VIDEO} ${VIDEO_NUM}
 done
