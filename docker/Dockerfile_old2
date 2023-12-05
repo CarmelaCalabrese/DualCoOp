@@ -1,5 +1,5 @@
 ARG DEBIAN_FRONTEND=noninteractive
-FROM nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04
 
 RUN apt-get update && apt install -y git nano vim wget
 
@@ -19,7 +19,7 @@ RUN conda create -n dualcoop python=3.9
 SHELL ["conda","run","-n","dualcoop","/bin/bash","-c"]
 
 #Install pytorch for cuda 
-RUN pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu113
+RUN pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu116
 RUN pip install pycocotools randaugment
 
 ### Installing Dassl

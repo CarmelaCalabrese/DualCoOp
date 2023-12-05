@@ -1,4 +1,5 @@
-from . import (dualcoop, dualcoop_openvclip)
+from . import (dualcoop)
+from . import (dualcoop_openvclip)
 
 def build_model(cfg, args, classnames, openvclip_cfg=None):
     """

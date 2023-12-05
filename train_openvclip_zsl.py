@@ -36,8 +36,6 @@ def main():
     print('Ho parsato Dualcoop')
     #print(cfg)
 
-    #CARMELA: come faccio il merging dei due cfg?
-
     # building the train and val dataloaders #CARMELA: da fare per ssv2
     train_split = cfg.DATASET.TRAIN_SPLIT
     val_split = cfg.DATASET.VAL_SPLIT
