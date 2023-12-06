@@ -9,11 +9,11 @@ from itertools import chain as chain
 import torch
 import torch.utils.data
 
-import slowfast.utils.logging as logging
-from slowfast.utils.env import pathmgr
+import OpenVCLIP.slowfast.utils.logging as logging
+from OpenVCLIP.slowfast.utils.env import pathmgr
 
-from . import utils as utils
-from .build import DATASET_REGISTRY
+from OpenVCLIP.slowfast.datasets import utils as utils
+from OpenVCLIP.slowfast.datasets.build import DATASET_REGISTRY
 
 logger = logging.get_logger(__name__)
 
@@ -46,6 +46,7 @@ class Ssv2(torch.utils.data.Dataset):
             num_retries (int): number of retries for reading frames from disk.
         """
         # Only support train, val, and test mode.
+        print('Entro qui')
         assert mode in [
             "train",
             "val",
@@ -88,7 +89,8 @@ class Ssv2(torch.utils.data.Dataset):
         with pathmgr.open(
             os.path.join(
                 self.cfg.DATA.PATH_TO_DATA_DIR,
-                "something-something-v2-labels.json",
+                #"something-something-v2-labels.json",
+                "labels.json",
             ),
             "r",
         ) as f:
@@ -97,7 +99,8 @@ class Ssv2(torch.utils.data.Dataset):
         # Loading labels.
         label_file = os.path.join(
             self.cfg.DATA.PATH_TO_DATA_DIR,
-            "something-something-v2-{}.json".format(
+            #"something-something-v2-{}.json".format(
+            "{}.json".format(
                 "train" if self.mode == "train" else "validation"
             ),
         )

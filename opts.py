@@ -153,7 +153,7 @@ def arg_parser():
         nargs="+",
     )
     parser.add_argument(
-        "--opts",
+        "--openvclip_opts",
         help="See slowfast/config/defaults.py for all options",
         default=None,
         nargs=argparse.REMAINDER,

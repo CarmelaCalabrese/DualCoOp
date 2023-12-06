@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 
 from clip import clip
-from openvclip import clip as openvclip
-from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
+from OpenVCLIP.slowfast.models import clip as openvclip
+from OpenVCLIP.slowfast.models.clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 from copy import deepcopy
-from slowfast.loading import load_openvclip
+from OpenVCLIP.slowfast.loading import load_openvclip
 import torch.nn.functional as F
 
 _tokenizer = _Tokenizer()

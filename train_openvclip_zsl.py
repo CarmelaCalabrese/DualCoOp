@@ -14,8 +14,8 @@ from dassl.optim import build_optimizer, build_lr_scheduler
 from utils.trainers import train_coop
 from utils.helper import save_checkpoint
 
-from slowfast.config.defaults import assert_and_infer_cfg
-from slowfast.utils.parser import load_config
+from OpenVCLIP.slowfast.config.defaults import assert_and_infer_cfg
+from OpenVCLIP.slowfast.utils.parser import load_config
 
 
 def main():
@@ -25,15 +25,15 @@ def main():
 
     #OpenVCLIP
     # Dual coop and openvclip do not share the same cfg file name, check arg_parser
-    openvclip_cfg = load_config(args, args.cfg_files[0])
+    openvclip_cfg = load_config(args)
     openvclip_cfg = assert_and_infer_cfg(openvclip_cfg)
 
-    print(openvclip_cfg)
+    #print(openvclip_cfg)
 
     #DualCoop
     cfg = setup_cfg(args)
 
-    print(cfg)
+    #print(cfg)
 
     #CARMELA: come faccio il merging dei due cfg?
 
@@ -41,7 +41,13 @@ def main():
     train_split = cfg.DATASET.TRAIN_SPLIT
     val_split = cfg.DATASET.VAL_SPLIT
     val_gzsl_split = cfg.DATASET.VAL_GZSL_SPLIT
-    train_dataset = build_dataset(cfg, train_split, cfg.DATASET.ZS_TRAIN)
+    # print('cfg')
+    # print(cfg)
+    # print('train_split')
+    # print(train_split)
+    # print('cfg.DATASET.ZS_TRAIN')
+    # print(cfg.DATASET.ZS_TRAIN)
+    train_dataset = build_dataset(cfg, openvclip_cfg, train_split, cfg.DATASET.ZS_TRAIN)
     train_cls_id = train_dataset.cls_id
     val_gzsi_dataset = build_dataset(cfg, val_gzsl_split, cfg.DATASET.ZS_TEST)
     val_gzsi_cls_id = val_gzsi_dataset.cls_id

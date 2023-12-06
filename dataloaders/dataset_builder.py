@@ -14,7 +14,8 @@ MODEL_TABLE = {
 }
 
 
-def build_dataset(cfg, data_split, annFile=""):
+#def build_dataset(cfg, data_split, annFile=""):
+def build_dataset(cfg, openvclip_cfg, data_split, annFile=""):
     print(' -------------------- Building Dataset ----------------------')
     print('DATASET.ROOT = %s' % cfg.DATASET.ROOT)
     print('data_split = %s' % data_split)
@@ -29,7 +30,8 @@ def build_dataset(cfg, data_split, annFile=""):
     except:
         img_size = cfg.INPUT.SIZE[0]
     print('INPUT.SIZE = %d' % img_size)
-    return MODEL_TABLE[cfg.DATASET.NAME](cfg.DATASET.ROOT, data_split, img_size,
-                                         p=cfg.DATALOADER.TRAIN_X.PORTION, annFile=annFile,
-                                         label_mask=cfg.DATASET.MASK_FILE,
-                                         partial=cfg.DATALOADER.TRAIN_X.PARTIAL_PORTION)
+    # return MODEL_TABLE[cfg.DATASET.NAME](cfg.DATASET.ROOT, data_split, img_size,
+    #                                      p=cfg.DATALOADER.TRAIN_X.PORTION, annFile=annFile,
+    #                                      label_mask=cfg.DATASET.MASK_FILE,
+    #                                      partial=cfg.DATALOADER.TRAIN_X.PARTIAL_PORTION)
+    return MODEL_TABLE[cfg.DATASET.NAME](openvclip_cfg, data_split)
