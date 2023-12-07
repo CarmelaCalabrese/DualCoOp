@@ -112,7 +112,11 @@ class MLCPromptLearner(nn.Module):
         self.ctx_neg = nn.Parameter(ctx_vectors_neg)  # to be optimized
 
         classnames = [name.replace("_", " ") for name in classnames]
+        print('classnames')
+        print(classnames)
         name_lens = [len(_tokenizer.encode(name)) for name in classnames]
+        print('name_lens')
+        print(name_lens)
         prompts_pos = [prompt_prefix_pos + " " + name + "." for name in classnames]
         prompts_neg = [prompt_prefix_neg + " " + name + "." for name in classnames]
 
@@ -121,6 +125,8 @@ class MLCPromptLearner(nn.Module):
         for p_pos, p_neg in zip(prompts_pos, prompts_neg):
             tokenized_prompts_pos.append(clip.tokenize(p_pos))
             tokenized_prompts_neg.append(clip.tokenize(p_neg))
+        print('tokenized_prompts_pos')
+        print(tokenized_prompts_pos)
         tokenized_prompts_pos = torch.cat(tokenized_prompts_pos)
         tokenized_prompts_neg = torch.cat(tokenized_prompts_neg)
         with torch.no_grad():
@@ -215,12 +221,15 @@ class DualCoop_openvclip(nn.Module):
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
 
         self.image_encoder = clip_model.visual
-        print('self.image_encoder')
-        print(self.image_encoder)
+        # print('self.image_encoder')
+        # print(self.image_encoder)
 
-        self.video_encoder = openvclip_model.visual #CARMELA ADDED
-        print('self.video_encoder')
-        print(self.video_encoder)
+        print('Openvclip_model')
+        print(openvclip_model)
+
+        self.video_encoder = openvclip_model #CARMELA ADDED
+        # print('self.video_encoder')
+        # print(self.video_encoder)
         
         self.text_encoder = TextEncoder(clip_model)
         self.logit_scale = cfg.TRAINER.COOP_MLC.LS
@@ -231,7 +240,8 @@ class DualCoop_openvclip(nn.Module):
         # get image features
         image_features, attn_weights = self.image_encoder(image.type(self.dtype)) #where do they use attn_weights? Maybe for gradCAM
         # get video features
-        video_features = self.video_encoder(image.type(self.dtype)) #CARMELA ADDED
+        #video_features = self.video_encoder(image.type(self.dtype)) #CARMELA ADDED
+        video_features = self.video_encoder.encode_image(image.type(self.dtype)) #CARMELA ADDED
         # get text features
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
@@ -289,6 +299,8 @@ class DualCoop_openvclip(nn.Module):
 def dualcoop_openvclip(cfg, openvclip_cfg, classnames, **kwargs):
     print(f"Loading CLIP (backbone: {cfg.MODEL.BACKBONE.NAME})")
     clip_model = load_clip_to_cpu(cfg)
+    # print('clip_model')
+    # print(clip_model)
     clip_model.float()
 
     openvclip_model = load_openvclip(openvclip_cfg)

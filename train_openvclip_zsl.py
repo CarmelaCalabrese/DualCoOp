@@ -14,7 +14,8 @@ from dassl.optim import build_optimizer, build_lr_scheduler
 from utils.trainers import train_coop
 from utils.helper import save_checkpoint
 
-from OpenVCLIP.slowfast.config.defaults import assert_and_infer_cfg
+#from OpenVCLIP.slowfast.config.defaults import assert_and_infer_cfg
+from OpenVCLIP.slowfast.config.my_defaults import assert_and_infer_cfg
 from OpenVCLIP.slowfast.utils.parser import load_config
 
 
@@ -25,7 +26,7 @@ def main():
 
     #OpenVCLIP
     # Dual coop and openvclip do not share the same cfg file name, check arg_parser
-    openvclip_cfg = load_config(args)
+    openvclip_cfg = load_config(args, args.cfg_files)
     openvclip_cfg = assert_and_infer_cfg(openvclip_cfg)
 
     #print(openvclip_cfg)
@@ -49,36 +50,39 @@ def main():
     # print(cfg.DATASET.ZS_TRAIN)
     train_dataset = build_dataset(cfg, openvclip_cfg, train_split, cfg.DATASET.ZS_TRAIN)
     train_cls_id = train_dataset.cls_id
-    val_gzsi_dataset = build_dataset(cfg, val_gzsl_split, cfg.DATASET.ZS_TEST)
-    val_gzsi_cls_id = val_gzsi_dataset.cls_id
-    val_unseen_dataset = build_dataset(cfg, val_split, cfg.DATASET.ZS_TEST_UNSEEN)
+    # val_gzsi_dataset = build_dataset(cfg, openvclip_cfg, val_gzsl_split, cfg.DATASET.ZS_TEST)
+    # val_gzsi_cls_id = val_gzsi_dataset.cls_id
+    val_unseen_dataset = build_dataset(cfg, openvclip_cfg, val_split, cfg.DATASET.ZS_TEST_UNSEEN)
     val_unseen_cls_id = val_unseen_dataset.cls_id
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE,
                                              shuffle=cfg.DATALOADER.TRAIN_X.SHUFFLE,
                                              num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
-    val_gzsi_loader = torch.utils.data.DataLoader(val_gzsi_dataset, batch_size=cfg.DATALOADER.VAL.BATCH_SIZE,
-                                                  shuffle=cfg.DATALOADER.VAL.SHUFFLE,
-                                                  num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
+    # val_gzsi_loader = torch.utils.data.DataLoader(val_gzsi_dataset, batch_size=cfg.DATALOADER.VAL.BATCH_SIZE,
+    #                                               shuffle=cfg.DATALOADER.VAL.SHUFFLE,
+    #                                               num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
     val_unseen_loader = torch.utils.data.DataLoader(val_unseen_dataset, batch_size=cfg.DATALOADER.VAL.BATCH_SIZE,
                                                     shuffle=cfg.DATALOADER.VAL.SHUFFLE,
                                                     num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
     classnames = train_dataset.classnames
-    cls_id = {'train': train_cls_id, 'val_gzsi': val_gzsi_cls_id, 'val_unseen': val_unseen_cls_id}
+    # print('classnames')
+    # print(classnames)
+    #cls_id = {'train': train_cls_id, 'val_gzsi': val_gzsi_cls_id, 'val_unseen': val_unseen_cls_id}
+    cls_id = {'train': train_cls_id, 'val_unseen': val_unseen_cls_id}
 
     test_split = cfg.DATASET.TEST_SPLIT
-    test_gzsl_split = cfg.DATASET.TEST_GZSL_SPLIT
-    test_gzsi_dataset = build_dataset(cfg, test_gzsl_split, cfg.DATASET.ZS_TEST)
-    test_gzsi_cls_id = test_gzsi_dataset.cls_id
-    test_unseen_dataset = build_dataset(cfg, test_split, cfg.DATASET.ZS_TEST_UNSEEN)
+    # test_gzsl_split = cfg.DATASET.TEST_GZSL_SPLIT
+    # test_gzsi_dataset = build_dataset(cfg, test_gzsl_split, cfg.DATASET.ZS_TEST)
+    # test_gzsi_cls_id = test_gzsi_dataset.cls_id
+    test_unseen_dataset = build_dataset(cfg, openvclip_cfg, test_split, cfg.DATASET.ZS_TEST_UNSEEN)
     test_unseen_cls_id = test_unseen_dataset.cls_id
-    test_gzsi_loader = torch.utils.data.DataLoader(test_gzsi_dataset, batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
-                                                  shuffle=cfg.DATALOADER.TEST.SHUFFLE,
-                                                  num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
+    # test_gzsi_loader = torch.utils.data.DataLoader(test_gzsi_dataset, batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
+    #                                               shuffle=cfg.DATALOADER.TEST.SHUFFLE,
+    #                                               num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
     test_unseen_loader = torch.utils.data.DataLoader(test_unseen_dataset, batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
                                                     shuffle=cfg.DATALOADER.TEST.SHUFFLE,
                                                     num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
 
-
+    ###############################
     # build the model
     model, arch_name = build_model(cfg, args, classnames, openvclip_cfg=openvclip_cfg)
     try:
@@ -157,7 +161,7 @@ def main():
             sched.load_state_dict(checkpoint['scheduler'])
 
     for epoch in range(args.start_epoch, cfg.OPTIM.MAX_EPOCH):
-        batch_time, losses, mAP_batches = train_coop(train_loader, [val_unseen_loader, val_gzsi_loader], model, optim, sched, args, cfg, epoch,  cls_id)
+        batch_time, losses, mAP_batches = train_coop(train_loader, [val_unseen_loader], model, optim, sched, args, cfg, epoch,  cls_id)
         print('Train: [{0}/{1}]\t'
               'Time {batch_time.avg:.3f}\t'
               'Loss {losses.avg:.2f} \t'
@@ -174,24 +178,24 @@ def main():
 
         if (epoch + 1) % args.val_every_n_epochs == 0 or epoch == args.stop_epochs - 1:
             p_unseen, r_unseen, f1_unseen, mAP_unseen = validate_zsl(val_unseen_loader, model, args, val_unseen_cls_id)
-            p_gzsl, r_gzsl, f1_gzsl, mAP_gzsl = validate_zsl(val_gzsi_loader, model, args, val_gzsi_cls_id)
+            #p_gzsl, r_gzsl, f1_gzsl, mAP_gzsl = validate_zsl(val_gzsi_loader, model, args, val_gzsi_cls_id)
             print('Test: [{}/{}]\t '
                   ' P_unseen {:.2f} \t R_unseen {:.2f} \t F1_unseen {:.2f} \t mAP_unseen {:.2f}\t'
                   ' P_gzsl {:.2f} \t R_gzsl {:.2f} \t F1_gzsl {:.2f} \t mAP_gzsl {:.2f}\t'
                   .format(epoch + 1, cfg.OPTIM.MAX_EPOCH,   p_unseen, r_unseen, f1_unseen, mAP_unseen,  p_gzsl, r_gzsl, f1_gzsl, mAP_gzsl), flush=True)
-            print('Test: [{}/{}]\t '
-                  ' P_unseen {:.2f} \t R_unseen {:.2f} \t F1_unseen {:.2f} \t mAP_unseen {:.2f}\t'
-                  ' P_gzsl {:.2f} \t R_gzsl {:.2f} \t F1_gzsl {:.2f} \t mAP_gzsl {:.2f}\t'
-                  .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, p_unseen, r_unseen, f1_unseen, mAP_unseen, p_gzsl, r_gzsl,
-                          f1_gzsl, mAP_gzsl), file=logfile, flush=True)
+            # print('Test: [{}/{}]\t '
+            #       ' P_unseen {:.2f} \t R_unseen {:.2f} \t F1_unseen {:.2f} \t mAP_unseen {:.2f}\t'
+            #       ' P_gzsl {:.2f} \t R_gzsl {:.2f} \t F1_gzsl {:.2f} \t mAP_gzsl {:.2f}\t'
+            #       .format(epoch + 1, cfg.OPTIM.MAX_EPOCH, p_unseen, r_unseen, f1_unseen, mAP_unseen, p_gzsl, r_gzsl,
+            #               f1_gzsl, mAP_gzsl), file=logfile, flush=True)
 
             is_unseen_best = f1_unseen > best_unseen_F1
             if is_unseen_best:
                 best_unseen_F1 = f1_unseen
 
-            is_gzsl_best = f1_gzsl > best_gzsl_F1
-            if is_gzsl_best:
-                best_gzsl_F1 = f1_gzsl
+            # is_gzsl_best = f1_gzsl > best_gzsl_F1
+            # if is_gzsl_best:
+            #     best_gzsl_F1 = f1_gzsl
 
             save_dict = {'epoch': epoch + 1,
                          'arch': arch_name,
@@ -202,7 +206,7 @@ def main():
                          'scheduler': sched.state_dict()
                          }
             save_checkpoint(save_dict, is_unseen_best, log_folder, prefix='unseen')
-            save_checkpoint(save_dict, is_gzsl_best, log_folder, prefix='gzsl')
+            # save_checkpoint(save_dict, is_gzsl_best, log_folder, prefix='gzsl')
 
     print('Evaluating the best model', flush=True)
     print('Evaluating the best model', file=logfile, flush=True)
@@ -222,20 +226,20 @@ def main():
           .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_unseen, r_unseen, f1_unseen, mAP_unseen),
           file=logfile, flush=True)
 
-    best_checkpoints = os.path.join(log_folder, 'gzsl_model_best.pth.tar')
-    print('... loading pretrained weights from %s for the best gzsl' % best_checkpoints, flush=True)
-    print('... loading pretrained weights from %s for the best gzsl' % best_checkpoints, file=logfile, flush=True)
-    checkpoint = torch.load(best_checkpoints, map_location='cpu')
-    model.load_state_dict(checkpoint['state_dict'])
-    best_epoch = checkpoint['epoch']
-    p_gzsl, r_gzsl, f1_gzsk, mAP_gzsl = validate_zsl(test_gzsi_loader, model, args, test_gzsi_cls_id)
-    print('Test: [{}/{}]\t '
-          ' p_gzsl {:.2f} \t r_gszl {:.2f} \t f_gzsl {:.2f} \t  mAP_gzsl {:.2f}'
-          .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_gzsl, r_gzsl, f1_gzsk, mAP_gzsl), flush=True)
-    print('Test: [{}/{}]\t '
-          ' p_gzsl {:.2f} \t r_gszl {:.2f} \t f_gzsl {:.2f} \t  mAP_gzsl {:.2f}'
-          .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_gzsl, r_gzsl, f1_gzsk, mAP_gzsl),
-          file=logfile, flush=True)
+    # best_checkpoints = os.path.join(log_folder, 'gzsl_model_best.pth.tar')
+    # print('... loading pretrained weights from %s for the best gzsl' % best_checkpoints, flush=True)
+    # print('... loading pretrained weights from %s for the best gzsl' % best_checkpoints, file=logfile, flush=True)
+    # checkpoint = torch.load(best_checkpoints, map_location='cpu')
+    # model.load_state_dict(checkpoint['state_dict'])
+    # best_epoch = checkpoint['epoch']
+    # p_gzsl, r_gzsl, f1_gzsk, mAP_gzsl = validate_zsl(test_gzsi_loader, model, args, test_gzsi_cls_id)
+    # print('Test: [{}/{}]\t '
+    #       ' p_gzsl {:.2f} \t r_gszl {:.2f} \t f_gzsl {:.2f} \t  mAP_gzsl {:.2f}'
+    #       .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_gzsl, r_gzsl, f1_gzsk, mAP_gzsl), flush=True)
+    # print('Test: [{}/{}]\t '
+    #       ' p_gzsl {:.2f} \t r_gszl {:.2f} \t f_gzsl {:.2f} \t  mAP_gzsl {:.2f}'
+    #       .format(best_epoch, cfg.OPTIM.MAX_EPOCH, p_gzsl, r_gzsl, f1_gzsk, mAP_gzsl),
+    #       file=logfile, flush=True)
 
 
 if __name__ == '__main__':

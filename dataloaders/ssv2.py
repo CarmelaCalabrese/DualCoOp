@@ -46,7 +46,6 @@ class Ssv2(torch.utils.data.Dataset):
             num_retries (int): number of retries for reading frames from disk.
         """
         # Only support train, val, and test mode.
-        print('Entro qui')
         assert mode in [
             "train",
             "val",
@@ -54,6 +53,9 @@ class Ssv2(torch.utils.data.Dataset):
         ], "Split '{}' not supported for Something-Something V2".format(mode)
         self.mode = mode
         self.cfg = cfg
+
+        # print('cfg')
+        # print(cfg)
 
         self._video_meta = {}
         self._num_retries = num_retries
@@ -68,6 +70,7 @@ class Ssv2(torch.utils.data.Dataset):
                 cfg.TEST.NUM_ENSEMBLE_VIEWS * cfg.TEST.NUM_SPATIAL_CROPS
             )
 
+        self.classnames = []
         logger.info("Constructing Something-Something V2 {}...".format(mode))
         self._construct_loader()
 
@@ -75,6 +78,8 @@ class Ssv2(torch.utils.data.Dataset):
         self.rand_erase = False
         self.use_temporal_gradient = False
         self.temporal_gradient_rate = 0.0
+        self.cls_id = []
+        
 
         if self.mode == "train" and self.cfg.AUG.ENABLE:
             self.aug = True
@@ -95,6 +100,12 @@ class Ssv2(torch.utils.data.Dataset):
             "r",
         ) as f:
             label_dict = json.load(f)
+            print('Label dict')
+            print(label_dict)
+
+        for key, val in label_dict.items():
+            self.classnames.append(key)
+        #self.classnames = cls
 
         # Loading labels.
         label_file = os.path.join(
@@ -111,10 +122,13 @@ class Ssv2(torch.utils.data.Dataset):
         self._labels = []
         for video in label_json:
             video_name = video["id"]
+            #print(video_name)
             template = video["template"]
+            #print(template)
             template = template.replace("[", "")
             template = template.replace("]", "")
             label = int(label_dict[template])
+            #print(label)
             self._video_names.append(video_name)
             self._labels.append(label)
 
@@ -130,10 +144,11 @@ class Ssv2(torch.utils.data.Dataset):
             path_to_file, self.cfg.DATA.PATH_PREFIX
         )
 
-        assert len(self._path_to_videos) == len(self._video_names), (
-            len(self._path_to_videos),
-            len(self._video_names),
-        )
+        #TODO Carmela:uncomment
+        # assert len(self._path_to_videos) == len(self._video_names), (
+        #     len(self._path_to_videos),
+        #     len(self._video_names),
+        # )
 
         # From dict to list.
         new_paths, new_labels = [], []
@@ -141,6 +156,10 @@ class Ssv2(torch.utils.data.Dataset):
             if self._video_names[index] in self._path_to_videos:
                 new_paths.append(self._path_to_videos[self._video_names[index]])
                 new_labels.append(self._labels[index])
+                # print('self._video_names[index]')
+                # print(self._video_names[index])
+                # print('self._labels[index]')
+                # print(self._labels[index])
 
         self._labels = new_labels
         self._path_to_videos = new_paths
@@ -168,6 +187,15 @@ class Ssv2(torch.utils.data.Dataset):
                 len(self._path_to_videos), path_to_file
             )
         )
+        # print('Self.mode')
+        # print(self.mode)
+        # print('Labels')
+        # print(self._labels)
+        self.cls_id = list(set(self._labels))
+        # print('self._labels')
+        # print(self._labels)
+        # print('cls_id')
+        # print(self.cls_id)
 
     def get_seq_frames(self, index):
         """
@@ -255,9 +283,14 @@ class Ssv2(torch.utils.data.Dataset):
 
         seq = self.get_seq_frames(index)
 
+        print('self._path_to_videos[index]')
+        print(self._path_to_videos[index])
+        prova=self._path_to_videos[index][0].split("_")[0]
+        print('prova')
+        print(prova)
         frames = torch.as_tensor(
             utils.retry_load_images(
-                [self._path_to_videos[index][frame] for frame in seq],
+                [f'/DualCoOp/scripts/something-something-v2/20bn-something-something-v2/{prova}/{self._path_to_videos[index][frame]}' for frame in seq],
                 self._num_retries,
             )
         )
@@ -331,3 +364,5 @@ class Ssv2(torch.utils.data.Dataset):
             (int): the number of videos in the dataset.
         """
         return len(self._path_to_videos)
+
+    

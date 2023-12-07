@@ -149,8 +149,9 @@ def arg_parser():
         "--openvclip_cfg",
         dest="cfg_files",
         help="Path to the config files",
-        default=["configs/Kinetics/SLOWFAST_4x16_R50.yaml"],
-        nargs="+",
+        #default=["configs/Kinetics/SLOWFAST_4x16_R50.yaml"],
+        default=["/DualCoOp/OpenVCLIP/configs/Kinetics/TemporalCLIP_vitb16_8x16_STAdapter.yaml"]
+        #nargs="+",
     )
     parser.add_argument(
         "--openvclip_opts",

@@ -64,13 +64,19 @@ def main():
                 val_json.append(datum)
                 extend_frame_desc_file(val_video_desc,datum,i,args)
 
+    cols = ['original_vido_id', 'video_id', 'frame_id', 'path', 'labels']
     train_video_desc_df = pd.DataFrame(train_video_desc) 
-    train_video_desc_df.to_csv('train.csv')
+    train_video_desc_df.drop(columns=[0])
+    train_video_desc_df.insert(loc=4, column= 4, value= '""')
+    train_video_desc_df.columns = cols
+    train_video_desc_df.to_csv('train.csv', sep=' ')
+    print(train_video_desc_df.loc[0])
 
     val_video_desc_df = pd.DataFrame(val_video_desc) 
-    val_video_desc_df.insert(loc=4,value= "")
-    val_video_desc_df.columns = ['original_vido_id', 'video_id', 'frame_id', 'path', 'labels']
-    val_video_desc_df.to_csv('val.csv')
+    val_video_desc_df.drop(columns=[0])
+    val_video_desc_df.insert(loc=4, column= 4, value= '""')
+    val_video_desc_df.columns = cols
+    val_video_desc_df.to_csv('val.csv', sep=' ')
 
     with open('preprocessed_val.json','w') as f: 
         json.dump(val_json,f,indent="\t")
