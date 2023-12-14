@@ -18,6 +18,8 @@ from utils.helper import save_checkpoint
 from OpenVCLIP.slowfast.config.my_defaults import assert_and_infer_cfg
 from OpenVCLIP.slowfast.utils.parser import load_config
 
+import time
+
 
 def main():
     global args
@@ -34,11 +36,10 @@ def main():
     #DualCoop
     cfg = setup_cfg(args)
 
-    #print(cfg)
+    #print('cfg.DATALOADER.NUM_WORKERS')
+    #print(cfg.DATALOADER.NUM_WORKERS)
 
-    #CARMELA: come faccio il merging dei due cfg?
-
-    # building the train and val dataloaders #CARMELA: da fare per ssv2
+    # building the train and val dataloaders 
     train_split = cfg.DATASET.TRAIN_SPLIT
     val_split = cfg.DATASET.VAL_SPLIT
     val_gzsl_split = cfg.DATASET.VAL_GZSL_SPLIT
@@ -54,13 +55,18 @@ def main():
     # val_gzsi_cls_id = val_gzsi_dataset.cls_id
     val_unseen_dataset = build_dataset(cfg, openvclip_cfg, val_split, cfg.DATASET.ZS_TEST_UNSEEN)
     val_unseen_cls_id = val_unseen_dataset.cls_id
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.DATALOADER.TRAIN_X.BATCH_SIZE,
+    # print('cfg.DATALOADER.TRAIN_X.BATCH_SIZE')
+    # print(cfg.DATALOADER.TRAIN_X.BATCH_SIZE)
+    # time.sleep(10)
+    #cfg.DATALOADER.TRAIN_X.BATCH_SIZE = 1
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1,
                                              shuffle=cfg.DATALOADER.TRAIN_X.SHUFFLE,
                                              num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
     # val_gzsi_loader = torch.utils.data.DataLoader(val_gzsi_dataset, batch_size=cfg.DATALOADER.VAL.BATCH_SIZE,
     #                                               shuffle=cfg.DATALOADER.VAL.SHUFFLE,
     #                                               num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
-    val_unseen_loader = torch.utils.data.DataLoader(val_unseen_dataset, batch_size=cfg.DATALOADER.VAL.BATCH_SIZE,
+    #cfg.DATALOADER.VAL_X.BATCH_SIZE= 1
+    val_unseen_loader = torch.utils.data.DataLoader(val_unseen_dataset, batch_size=1,
                                                     shuffle=cfg.DATALOADER.VAL.SHUFFLE,
                                                     num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
     classnames = train_dataset.classnames
@@ -68,6 +74,8 @@ def main():
     # print(classnames)
     #cls_id = {'train': train_cls_id, 'val_gzsi': val_gzsi_cls_id, 'val_unseen': val_unseen_cls_id}
     cls_id = {'train': train_cls_id, 'val_unseen': val_unseen_cls_id}
+    print('cls_id')
+    print(cls_id)
 
     test_split = cfg.DATASET.TEST_SPLIT
     # test_gzsl_split = cfg.DATASET.TEST_GZSL_SPLIT
@@ -81,6 +89,7 @@ def main():
     test_unseen_loader = torch.utils.data.DataLoader(test_unseen_dataset, batch_size=cfg.DATALOADER.TEST.BATCH_SIZE,
                                                     shuffle=cfg.DATALOADER.TEST.SHUFFLE,
                                                     num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
+
 
     ###############################
     # build the model

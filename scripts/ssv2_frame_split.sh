@@ -20,5 +20,5 @@ do
     VIDEO_NUM=$( echo ${VIDEO} | cut -d '.' -f1) 
     mkdir -p ${VIDEO_NUM} 
     ffmpeg -i ${VIDEO} -r 30 -q:v 1 ${VIDEO_NUM}/${VIDEO_NUM}_%03d.jpg 
-    mv ${VIDEO} ${VIDEO_NUM}
+    #mv ${VIDEO} ${VIDEO_NUM}
 done

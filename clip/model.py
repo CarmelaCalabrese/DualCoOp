@@ -6,6 +6,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+import time
+
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -56,6 +58,9 @@ class Bottleneck(nn.Module):
 class AttentionPool2d(nn.Module):
     def __init__(self, spacial_dim: int, embed_dim: int, num_heads: int, output_dim: int = None):
         super().__init__()
+        print('Sono in AttentionPool2d embed_dim')
+        print(embed_dim)
+        time.sleep(5)
         self.positional_embedding = nn.Parameter(torch.randn(spacial_dim ** 2 + 1, embed_dim) / embed_dim ** 0.5)
         self.k_proj = nn.Linear(embed_dim, embed_dim)
         self.q_proj = nn.Linear(embed_dim, embed_dim)
@@ -108,7 +113,13 @@ class AttentionConv(nn.Module):
     def __init__(self, embed_dim: int, spec_dim: int,  output_dim: int = None):
         super().__init__()
         self.spec_dim = spec_dim
+        print('QUIIII: spec_dim')
+        print(spec_dim)
+        time.sleep(5)
         self.positional_embedding = nn.Parameter(torch.randn(spec_dim ** 2 +1, embed_dim) / embed_dim ** 0.5)
+        print('self.positional_embedding.size() inside Attention')
+        print(self.positional_embedding.size())
+        time.sleep(5)
         self.k_proj = nn.Linear(embed_dim, embed_dim)
         self.q_proj = nn.Linear(embed_dim, embed_dim)
         self.v_proj = nn.Linear(embed_dim, embed_dim)
@@ -123,6 +134,8 @@ class AttentionConv(nn.Module):
             positional_embedding = torch.cat([self.positional_embedding[:1], w_special], dim=0)
         else:
             positional_embedding = self.positional_embedding
+        print('positional_embedding in Atteintion')
+        print(positional_embedding)
         x = x.reshape(x.shape[0], x.shape[1], x.shape[2] * x.shape[3]).permute(2, 0, 1)  # NCHW -> (HW)NC
         x = torch.cat([x.mean(dim=0, keepdim=True), x], dim=0)  # (HW+1)NC
         x = x + positional_embedding[:, None, :].to(x.dtype)  # (HW+1)NC
@@ -338,6 +351,8 @@ class VisionTransformer(nn.Module):
         scale = width ** -0.5
         self.class_embedding = nn.Parameter(scale * torch.randn(width))
         self.positional_embedding = nn.Parameter(scale * torch.randn((input_resolution // patch_size) ** 2 + 1, width))
+        print('self.positional_embedding in Vision Transformer')
+        print(self.positional_embedding.size())
         self.ln_pre = LayerNorm(width)
 
         self.transformer = Transformer(width, layers, heads)
@@ -414,6 +429,9 @@ class CLIP(nn.Module):
 
         self.vocab_size = vocab_size
         self.token_embedding = nn.Embedding(vocab_size, transformer_width)
+        print('self.context_length in CLIP')
+        print(self.context_length)
+        print(transformer_width)
         self.positional_embedding = nn.Parameter(torch.empty(self.context_length, transformer_width))
         self.ln_final = LayerNorm(transformer_width)
 
@@ -517,6 +535,8 @@ class CLIP_conv_proj(nn.Module):
         super().__init__()
 
         self.context_length = context_length
+        #TODO ho cambiato a mano il context_lenght (era 77 ma l'ho messo a 100) ma non capisco da dove viene
+        self.context_length = 100 ###
 
         if isinstance(vision_layers, (tuple, list)):
             vision_heads = vision_width * 32 // 64
@@ -544,6 +564,10 @@ class CLIP_conv_proj(nn.Module):
             heads=transformer_heads,
             attn_mask=self.build_attention_mask()
         )
+
+        print('self.context_length in CLIP_conv')
+        print(self.context_length)
+        time.sleep(10)
 
         self.vocab_size = vocab_size
         self.token_embedding = nn.Embedding(vocab_size, transformer_width)
@@ -697,7 +721,20 @@ def build_model(state_dict: dict):
 
 
 def build_model_conv_proj(state_dict: dict, cfg):
+
+    print('A questo punto mi aspetto None')
+    print(state_dict)
+    time.sleep(5)
     vit = "visual.proj" in state_dict
+
+    # print('##########################################################')
+    # print('state_dict')
+    # print(state_dict)
+    # time.sleep(10)
+
+    print('Sono in build_model_conv_proj')
+    print(state_dict["positional_embedding"].shape[0])
+    time.sleep(5)
 
     if vit:
         vision_width = state_dict["visual.conv1.weight"].shape[0]
@@ -716,6 +753,8 @@ def build_model_conv_proj(state_dict: dict, cfg):
 
     embed_dim = state_dict["text_projection"].shape[1]
     context_length = state_dict["positional_embedding"].shape[0]
+    ## TODO cambiato
+    context_length=100
     vocab_size = state_dict["token_embedding.weight"].shape[0]
     transformer_width = state_dict["ln_final.weight"].shape[0]
     transformer_heads = transformer_width // 64
@@ -733,6 +772,12 @@ def build_model_conv_proj(state_dict: dict, cfg):
 
     convert_weights(model)
     old_state_dict = model.state_dict()
+    print('Siamo qui???????')
+    print('old')
+    print(old_state_dict['positional_embedding'].shape[0])
+    print('new')
+    print(state_dict['positional_embedding'].shape[0])
+    time.sleep(10)
     for k, v in old_state_dict.items():
         if k in state_dict.keys():
             if 'visual' in k and ('v_proj' in k or 'c_proj' in k):
@@ -755,8 +800,10 @@ def build_model_conv_proj(state_dict: dict, cfg):
                 old_state_dict[k] = state_dict[k]
         else:
             print('Skip %s' % (k))
-    state_dict = old_state_dict
-    model.load_state_dict(state_dict)
+    #Il pezzo di codice nel for mi sembra inutile commento le due righe successive e carico old
+    #state_dict = old_state_dict
+    #model.load_state_dict(state_dict)
+    model.load_state_dict(old_state_dict)
 
 
     return model.eval()

@@ -105,13 +105,22 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
     criterion3 = AsymmetricLoss3(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
 
     end = time.time()
+    # print('data_loader')
+    # print(data_loader)
     for i,   (images, target) in enumerate(data_loader):
+        print('images')
+        print(images)
+        print('target')
+        print(target)
         target = target.max(dim=1)[0]
         if torch.cuda.is_available():
             device = torch.device("cuda")
         else:
             device = torch.device("cpu")
-        images = images.to(device)
+        
+        #images = images.to(device)
+        images = [img.to(device) for img in images]
+
         target = target.to(device)
         if cls_id is not None:
             if num_train_cls > args.num_train_cls:
@@ -124,12 +133,18 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
         # compute output
         with autocast():
+            print('images prima di model')
+            print(images)
+            print('batch_cls_id_input')
+            print(batch_cls_id_input)
             output = model(images, batch_cls_id_input)
         # loss = args.loss_w * criterion(output, target)
         if cls_id is not None:
             # output = output[:, :, cls_id['train']]
             # target = target[:, cls_id['train']]
             target = target[:, batch_cls_id_input]
+        print('output.dim()')
+        print(output.dim())
         if output.dim() == 3:
             loss = args.loss_w * criterion(output, target)
         elif args.single_prompt == 'pos':

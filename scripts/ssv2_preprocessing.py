@@ -10,6 +10,7 @@ def main():
     parser.add_argument("--split",dest='split',action='store',default=0.2,type=float)
     parser.add_argument("--labels_dir",dest='labels_dir',action='store',default='./something-something-v2/labels')
     parser.add_argument("--video_dir",dest='video_dir',action='store',default='./something-something-v2/20bn-something-something-v2')
+    #parser.add_argument("--frame_dir",dest='frame_dir',action='store',default='./something-something-v2/20bn-something-something-v2-frames')
     args = parser.parse_args()
 
     original_train_label_file = os.path.join(args.labels_dir,'train.json')
@@ -94,6 +95,7 @@ def main():
 def extend_frame_desc_file(frame_desc_dict,datum,i,args):
     video_id = datum['id']
     video_dir = os.path.join(args.video_dir,video_id)
+    #video_dir = os.path.join(args.frame_dir,video_id)
     jpg_ids = os.listdir(video_dir)
     frame_desc_dict.extend([[datum['id'],i,k,jpg_id] for k,jpg_id in enumerate(jpg_ids)])
 

@@ -8,6 +8,7 @@ import random
 from itertools import chain as chain
 import torch
 import torch.utils.data
+import time
 
 import OpenVCLIP.slowfast.utils.logging as logging
 from OpenVCLIP.slowfast.utils.env import pathmgr
@@ -70,6 +71,7 @@ class Ssv2(torch.utils.data.Dataset):
                 cfg.TEST.NUM_ENSEMBLE_VIEWS * cfg.TEST.NUM_SPATIAL_CROPS
             )
 
+        self.cls_id = []
         self.classnames = []
         logger.info("Constructing Something-Something V2 {}...".format(mode))
         self._construct_loader()
@@ -78,7 +80,7 @@ class Ssv2(torch.utils.data.Dataset):
         self.rand_erase = False
         self.use_temporal_gradient = False
         self.temporal_gradient_rate = 0.0
-        self.cls_id = []
+        
         
 
         if self.mode == "train" and self.cfg.AUG.ENABLE:
@@ -100,8 +102,8 @@ class Ssv2(torch.utils.data.Dataset):
             "r",
         ) as f:
             label_dict = json.load(f)
-            print('Label dict')
-            print(label_dict)
+            #print('Label dict')
+            #print(label_dict)
 
         for key, val in label_dict.items():
             self.classnames.append(key)
@@ -192,10 +194,10 @@ class Ssv2(torch.utils.data.Dataset):
         # print('Labels')
         # print(self._labels)
         self.cls_id = list(set(self._labels))
-        # print('self._labels')
-        # print(self._labels)
-        # print('cls_id')
-        # print(self.cls_id)
+        #print('self._labels')
+        #print(self._labels)
+        #print('cls_id')
+        #print(len(self.cls_id))
 
     def get_seq_frames(self, index):
         """
@@ -283,11 +285,11 @@ class Ssv2(torch.utils.data.Dataset):
 
         seq = self.get_seq_frames(index)
 
-        print('self._path_to_videos[index]')
-        print(self._path_to_videos[index])
+        #print('self._path_to_videos[index]')
+        #print(self._path_to_videos[index])
         prova=self._path_to_videos[index][0].split("_")[0]
-        print('prova')
-        print(prova)
+        #print('prova')
+        #print(prova)
         frames = torch.as_tensor(
             utils.retry_load_images(
                 [f'/DualCoOp/scripts/something-something-v2/20bn-something-something-v2/{prova}/{self._path_to_videos[index][frame]}' for frame in seq],
@@ -316,8 +318,8 @@ class Ssv2(torch.utils.data.Dataset):
                     frame_list.append(new_frames)
                     label_list.append(label)
                     index_list.append(index)
-                return frame_list, label_list, index_list, [0] * self.cfg.AUG.NUM_SAMPLE, {}
-
+                return frame_list, label_list
+                #return frame_list, label_list, index_list, [0] * self.cfg.AUG.NUM_SAMPLE, {}
             else:
                 frames = utils.aug_frame(
                     self.cfg,
@@ -334,7 +336,10 @@ class Ssv2(torch.utils.data.Dataset):
             frames = utils.tensor_normalize(
                 frames, self.cfg.DATA.MEAN, self.cfg.DATA.STD
             )
-
+            
+            #print('frames.size()')
+            #print(frames.size())
+            #time.sleep(5)
             # T H W C -> C T H W.
             frames = frames.permute(3, 0, 1, 2)
             # Perform data augmentation.
@@ -348,7 +353,30 @@ class Ssv2(torch.utils.data.Dataset):
                 inverse_uniform_sampling=self.cfg.DATA.INV_UNIFORM_SAMPLE,
             )
         frames = utils.pack_pathway_output(self.cfg, frames)
-        return frames, label, index, 0, {}
+        
+        #frames = frames[0]
+
+        output = torch.zeros(len(self.classnames), dtype=torch.long)
+        #print('label')
+        #print(label)
+        output[label]=1.0
+        #print('output')
+        #print(output)
+        label = output
+
+        #frames= torch.as_tensor([frm for frm in frames])
+        #print('frames.size() in uscita')
+        
+        #print(len(frames[0]))
+        #print(len(frames[0][0]))
+        #print(len(frames[0][0][0]))
+        #time.sleep(5)
+
+        print('label.size() in uscita')
+        print(len(label))
+
+        return frames, label
+        #return frames, label, index, 0, {}
 
     def __len__(self):
         """

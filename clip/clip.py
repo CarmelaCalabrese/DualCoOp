@@ -116,6 +116,8 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
     try:
         # loading JIT archive
         model = torch.jit.load(model_path, map_location=device if jit else "cpu").eval()
+        print('model_path')
+        print(model_path)
         state_dict = None
     except RuntimeError:
         # loading saved state dict
@@ -124,6 +126,11 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
             jit = False
         state_dict = torch.load(model_path, map_location="cpu")
 
+    time.sleep(10)
+    print('*************************************************')
+    print('state_dict in load')
+    print(state_dict)
+    time.sleep(10)
     if not jit:
         model = build_model(state_dict or model.state_dict()).to(device)
         if str(device) == "cpu":

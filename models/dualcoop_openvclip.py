@@ -6,7 +6,9 @@ from OpenVCLIP.slowfast.models import clip as openvclip
 from OpenVCLIP.slowfast.models.clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 from copy import deepcopy
 from OpenVCLIP.slowfast.loading import load_openvclip
+from OpenVCLIP.tools import test_net
 import torch.nn.functional as F
+import time
 
 _tokenizer = _Tokenizer()
 
@@ -21,6 +23,9 @@ def load_clip_to_cpu(cfg):
     try:
         # loading JIT archive
         model = torch.jit.load(model_path, map_location="cpu").eval()
+        print('model_path')
+        print(model_path)
+        time.sleep(10)
         state_dict = None
 
     except RuntimeError:
@@ -40,6 +45,10 @@ class TextEncoder(nn.Module):
         self.dtype = clip_model.dtype
 
     def forward(self, prompts, tokenized_prompts):
+        # print('prompts.size()')
+        # print(prompts.size())
+        # print('self.positional_embedding.size()')
+        # print(self.positional_embedding.size())
         x = prompts + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x)
@@ -57,6 +66,9 @@ class MLCPromptLearner(nn.Module):
     def __init__(self, cfg, classnames, clip_model):
         super().__init__()
         n_cls = len(classnames)
+        print('n_cls')
+        print(n_cls)
+        time.sleep(5)
         n_ctx_pos = cfg.TRAINER.COOP_MLC.N_CTX_POS
         n_ctx_neg = cfg.TRAINER.COOP_MLC.N_CTX_NEG
         ctx_init_pos = cfg.TRAINER.COOP_MLC.POSITIVE_PROMPT_INIT.strip()
@@ -76,7 +88,15 @@ class MLCPromptLearner(nn.Module):
                 embedding_pos = clip_model.token_embedding(prompt_pos).type(dtype)
                 embedding_neg = clip_model.token_embedding(prompt_neg).type(dtype)
             ctx_vectors_pos = embedding_pos[0, 1: 1 + n_ctx_pos, :]
+            print('ctx_vectors_pos')
+            print(ctx_vectors_pos)
+            print(len(ctx_vectors_pos))
+            time.sleep(5)
             ctx_vectors_neg = embedding_neg[0, 1: 1 + n_ctx_neg, :]
+            print('ctx_vectors_neg')
+            print(ctx_vectors_neg)
+            print(len(ctx_vectors_neg))
+            time.sleep(5)
             prompt_prefix_pos = ctx_init_pos
             prompt_prefix_neg = ctx_init_neg
             if cfg.TRAINER.COOP_MLC.CSC:
@@ -111,14 +131,19 @@ class MLCPromptLearner(nn.Module):
         self.ctx_pos = nn.Parameter(ctx_vectors_pos)  # to be optimized
         self.ctx_neg = nn.Parameter(ctx_vectors_neg)  # to be optimized
 
+        print('classnames - pre')
+        print(classnames)
         classnames = [name.replace("_", " ") for name in classnames]
-        print('classnames')
+        print('classnames - post')
         print(classnames)
         name_lens = [len(_tokenizer.encode(name)) for name in classnames]
         print('name_lens')
         print(name_lens)
         prompts_pos = [prompt_prefix_pos + " " + name + "." for name in classnames]
         prompts_neg = [prompt_prefix_neg + " " + name + "." for name in classnames]
+        print('len(prompts_pos)')
+        print(len(prompts_pos))
+        time.sleep(5)
 
         tokenized_prompts_pos = []
         tokenized_prompts_neg = []
@@ -132,6 +157,10 @@ class MLCPromptLearner(nn.Module):
         with torch.no_grad():
             embedding_pos = clip_model.token_embedding(tokenized_prompts_pos).type(dtype)
             embedding_neg = clip_model.token_embedding(tokenized_prompts_neg).type(dtype)
+        print('embedding_pos')
+        print(embedding_pos)
+        time.sleep(5)
+
 
         # These token vectors will be saved when in save_model(),
         # but they should be ignored in load_model() as we want to use
@@ -152,6 +181,9 @@ class MLCPromptLearner(nn.Module):
         ctx_pos = self.ctx_pos
         ctx_neg = self.ctx_neg
 
+        print('ctx_pos.dim()')
+        print(ctx_pos.dim())
+
         if ctx_pos.dim() == 2:
             if cls_id is None:
                 ctx_pos = ctx_pos.unsqueeze(0).expand(self.n_cls, -1, -1)
@@ -160,6 +192,9 @@ class MLCPromptLearner(nn.Module):
         else:
             if cls_id is not None:
                 ctx_pos = ctx_pos[cls_id]
+
+        print('ctx_pos')
+        print(ctx_pos)
 
         if ctx_neg.dim() == 2:
             if cls_id is None:
@@ -190,6 +225,8 @@ class MLCPromptLearner(nn.Module):
             ],
             dim=1,
         )
+        print('prompts_pos')
+        print(prompts_pos)
 
         prompts_neg = torch.cat(
             [
@@ -216,16 +253,16 @@ class MLCPromptLearner(nn.Module):
 class DualCoop_openvclip(nn.Module):
     def __init__(self, cfg, classnames, clip_model, openvclip_model):
         super().__init__()
-        self.visual_encoder_type = cfg.MODEL.BACKBONE.NAME
+        #self.visual_encoder_type = cfg.MODEL.BACKBONE.NAME
         self.prompt_learner = MLCPromptLearner(cfg, classnames, clip_model)
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
 
-        self.image_encoder = clip_model.visual
+        #self.image_encoder = clip_model.visual
         # print('self.image_encoder')
         # print(self.image_encoder)
 
-        print('Openvclip_model')
-        print(openvclip_model)
+        #print('Openvclip_model')
+        #print(openvclip_model)
 
         self.video_encoder = openvclip_model #CARMELA ADDED
         # print('self.video_encoder')
@@ -238,21 +275,35 @@ class DualCoop_openvclip(nn.Module):
 
     def forward(self, image, cls_id=None):
         # get image features
-        image_features, attn_weights = self.image_encoder(image.type(self.dtype)) #where do they use attn_weights? Maybe for gradCAM
+        #image_features, attn_weights = self.image_encoder(image.type(self.dtype)) #where do they use attn_weights? Maybe for gradCAM
         # get video features
         #video_features = self.video_encoder(image.type(self.dtype)) #CARMELA ADDED
-        video_features = self.video_encoder.encode_image(image.type(self.dtype)) #CARMELA ADDED
+        #video_features = self.video_encoder.encode_image(image.type(self.dtype)) #CARMELA ADDED
+        # print('image!!!!')
+        # print(image)
+        #print('self.video_encoder')
+        #print(self.video_encoder)
+        
+        image = torch.cat(image)
+        bz, channel_dim, clip_len, h, w = image.shape
+        image = image.permute(0, 2, 1, 3, 4)
+        image = image.reshape(bz*clip_len, channel_dim, h, w)
+
+        video_features = self.video_encoder.model.encode_image(image) #CARMELA ADDED
+        #video_features = self.video_encoder.model(image)
+        print('video_features')
+        print(video_features)
         # get text features
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
 
         # normalize features
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-        image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
+        #image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
         video_features_norm /= video_features.norm(dim=-1, keepdim=True) #CARMELA ADDED
 
         # Class-Specific Region Feature Aggregation
-        output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])
+        #output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])
         output = 20 * F.conv1d(video_features_norm, text_features[:, :, None]) #CARMELA ADDED
         b, c, _ = output.shape
         output_half = output[:,  c // 2:]
@@ -285,7 +336,7 @@ class DualCoop_openvclip(nn.Module):
         for name, param in self.named_parameters():
             if 'attnpool' in name and 'image_encoder' in name:
                 params.append(param)
-                print(name)
+                #print(name)
         return params
 
     def prompt_params(self):
@@ -298,11 +349,16 @@ class DualCoop_openvclip(nn.Module):
 
 def dualcoop_openvclip(cfg, openvclip_cfg, classnames, **kwargs):
     print(f"Loading CLIP (backbone: {cfg.MODEL.BACKBONE.NAME})")
+    print('cfg.MODEL.BACKBONE.NAME')
+    print(cfg.MODEL.BACKBONE.NAME)
     clip_model = load_clip_to_cpu(cfg)
-    # print('clip_model')
-    # print(clip_model)
+    #exit()
     clip_model.float()
 
+    #time.sleep(3)
+    print('OpenVCLIP')
+    #test = test_net.test
+    #test(openvclip_cfg)
     openvclip_model = load_openvclip(openvclip_cfg)
 
     print("Building dualcoop_openvclip")
