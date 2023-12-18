@@ -55,9 +55,6 @@ class Ssv2(torch.utils.data.Dataset):
         self.mode = mode
         self.cfg = cfg
 
-        # print('cfg')
-        # print(cfg)
-
         self._video_meta = {}
         self._num_retries = num_retries
         # For training or validation mode, one single clip is sampled from every
@@ -102,8 +99,6 @@ class Ssv2(torch.utils.data.Dataset):
             "r",
         ) as f:
             label_dict = json.load(f)
-            #print('Label dict')
-            #print(label_dict)
 
         for key, val in label_dict.items():
             self.classnames.append(key)
@@ -124,13 +119,10 @@ class Ssv2(torch.utils.data.Dataset):
         self._labels = []
         for video in label_json:
             video_name = video["id"]
-            #print(video_name)
             template = video["template"]
-            #print(template)
             template = template.replace("[", "")
             template = template.replace("]", "")
             label = int(label_dict[template])
-            #print(label)
             self._video_names.append(video_name)
             self._labels.append(label)
 
@@ -158,10 +150,6 @@ class Ssv2(torch.utils.data.Dataset):
             if self._video_names[index] in self._path_to_videos:
                 new_paths.append(self._path_to_videos[self._video_names[index]])
                 new_labels.append(self._labels[index])
-                # print('self._video_names[index]')
-                # print(self._video_names[index])
-                # print('self._labels[index]')
-                # print(self._labels[index])
 
         self._labels = new_labels
         self._path_to_videos = new_paths
@@ -189,15 +177,8 @@ class Ssv2(torch.utils.data.Dataset):
                 len(self._path_to_videos), path_to_file
             )
         )
-        # print('Self.mode')
-        # print(self.mode)
-        # print('Labels')
-        # print(self._labels)
         self.cls_id = list(set(self._labels))
-        #print('self._labels')
-        #print(self._labels)
-        #print('cls_id')
-        #print(len(self.cls_id))
+
 
     def get_seq_frames(self, index):
         """
@@ -285,11 +266,9 @@ class Ssv2(torch.utils.data.Dataset):
 
         seq = self.get_seq_frames(index)
 
-        #print('self._path_to_videos[index]')
-        #print(self._path_to_videos[index])
+
         prova=self._path_to_videos[index][0].split("_")[0]
-        #print('prova')
-        #print(prova)
+
         frames = torch.as_tensor(
             utils.retry_load_images(
                 [f'/DualCoOp/scripts/something-something-v2/20bn-something-something-v2/{prova}/{self._path_to_videos[index][frame]}' for frame in seq],
@@ -337,9 +316,6 @@ class Ssv2(torch.utils.data.Dataset):
                 frames, self.cfg.DATA.MEAN, self.cfg.DATA.STD
             )
             
-            #print('frames.size()')
-            #print(frames.size())
-            #time.sleep(5)
             # T H W C -> C T H W.
             frames = frames.permute(3, 0, 1, 2)
             # Perform data augmentation.
@@ -354,26 +330,10 @@ class Ssv2(torch.utils.data.Dataset):
             )
         frames = utils.pack_pathway_output(self.cfg, frames)
         
-        #frames = frames[0]
 
         output = torch.zeros(len(self.classnames), dtype=torch.long)
-        #print('label')
-        #print(label)
         output[label]=1.0
-        #print('output')
-        #print(output)
         label = output
-
-        #frames= torch.as_tensor([frm for frm in frames])
-        #print('frames.size() in uscita')
-        
-        #print(len(frames[0]))
-        #print(len(frames[0][0]))
-        #print(len(frames[0][0][0]))
-        #time.sleep(5)
-
-        print('label.size() in uscita')
-        print(len(label))
 
         return frames, label
         #return frames, label, index, 0, {}

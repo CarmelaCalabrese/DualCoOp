@@ -23,9 +23,6 @@ def load_clip_to_cpu(cfg):
     try:
         # loading JIT archive
         model = torch.jit.load(model_path, map_location="cpu").eval()
-        print('model_path')
-        print(model_path)
-        time.sleep(10)
         state_dict = None
 
     except RuntimeError:
@@ -66,9 +63,6 @@ class MLCPromptLearner(nn.Module):
     def __init__(self, cfg, classnames, clip_model):
         super().__init__()
         n_cls = len(classnames)
-        print('n_cls')
-        print(n_cls)
-        time.sleep(5)
         n_ctx_pos = cfg.TRAINER.COOP_MLC.N_CTX_POS
         n_ctx_neg = cfg.TRAINER.COOP_MLC.N_CTX_NEG
         ctx_init_pos = cfg.TRAINER.COOP_MLC.POSITIVE_PROMPT_INIT.strip()
@@ -88,15 +82,7 @@ class MLCPromptLearner(nn.Module):
                 embedding_pos = clip_model.token_embedding(prompt_pos).type(dtype)
                 embedding_neg = clip_model.token_embedding(prompt_neg).type(dtype)
             ctx_vectors_pos = embedding_pos[0, 1: 1 + n_ctx_pos, :]
-            print('ctx_vectors_pos')
-            print(ctx_vectors_pos)
-            print(len(ctx_vectors_pos))
-            time.sleep(5)
             ctx_vectors_neg = embedding_neg[0, 1: 1 + n_ctx_neg, :]
-            print('ctx_vectors_neg')
-            print(ctx_vectors_neg)
-            print(len(ctx_vectors_neg))
-            time.sleep(5)
             prompt_prefix_pos = ctx_init_pos
             prompt_prefix_neg = ctx_init_neg
             if cfg.TRAINER.COOP_MLC.CSC:
@@ -131,19 +117,11 @@ class MLCPromptLearner(nn.Module):
         self.ctx_pos = nn.Parameter(ctx_vectors_pos)  # to be optimized
         self.ctx_neg = nn.Parameter(ctx_vectors_neg)  # to be optimized
 
-        print('classnames - pre')
-        print(classnames)
         classnames = [name.replace("_", " ") for name in classnames]
-        print('classnames - post')
-        print(classnames)
         name_lens = [len(_tokenizer.encode(name)) for name in classnames]
-        print('name_lens')
-        print(name_lens)
         prompts_pos = [prompt_prefix_pos + " " + name + "." for name in classnames]
         prompts_neg = [prompt_prefix_neg + " " + name + "." for name in classnames]
-        print('len(prompts_pos)')
-        print(len(prompts_pos))
-        time.sleep(5)
+
 
         tokenized_prompts_pos = []
         tokenized_prompts_neg = []
@@ -181,8 +159,6 @@ class MLCPromptLearner(nn.Module):
         ctx_pos = self.ctx_pos
         ctx_neg = self.ctx_neg
 
-        print('ctx_pos.dim()')
-        print(ctx_pos.dim())
 
         if ctx_pos.dim() == 2:
             if cls_id is None:
@@ -192,9 +168,6 @@ class MLCPromptLearner(nn.Module):
         else:
             if cls_id is not None:
                 ctx_pos = ctx_pos[cls_id]
-
-        print('ctx_pos')
-        print(ctx_pos)
 
         if ctx_neg.dim() == 2:
             if cls_id is None:
@@ -276,31 +249,35 @@ class DualCoop_openvclip(nn.Module):
     def forward(self, image, cls_id=None):
         # get image features
         #image_features, attn_weights = self.image_encoder(image.type(self.dtype)) #where do they use attn_weights? Maybe for gradCAM
+        
         # get video features
         #video_features = self.video_encoder(image.type(self.dtype)) #CARMELA ADDED
         #video_features = self.video_encoder.encode_image(image.type(self.dtype)) #CARMELA ADDED
-        # print('image!!!!')
-        # print(image)
-        #print('self.video_encoder')
-        #print(self.video_encoder)
-        
+
         image = torch.cat(image)
         bz, channel_dim, clip_len, h, w = image.shape
+        print('bz, channel_dim, clip_len, h, w')
+        print(bz, channel_dim, clip_len, h, w)
+        time.sleep(10)
         image = image.permute(0, 2, 1, 3, 4)
         image = image.reshape(bz*clip_len, channel_dim, h, w)
+        
 
         video_features = self.video_encoder.model.encode_image(image) #CARMELA ADDED
-        #video_features = self.video_encoder.model(image)
         print('video_features')
-        print(video_features)
+        print(video_features.size())
         # get text features
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
+        print('text_features')
+        print(text_features.size())
 
         # normalize features
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+        print('text_features_norm')
+        print(text_features.size())
         #image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
-        video_features_norm /= video_features.norm(dim=-1, keepdim=True) #CARMELA ADDED
+        video_features_norm = video_features / video_features.norm(dim=-1, keepdim=True) #CARMELA ADDED
 
         # Class-Specific Region Feature Aggregation
         #output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])

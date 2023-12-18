@@ -55,17 +55,14 @@ def main():
     # val_gzsi_cls_id = val_gzsi_dataset.cls_id
     val_unseen_dataset = build_dataset(cfg, openvclip_cfg, val_split, cfg.DATASET.ZS_TEST_UNSEEN)
     val_unseen_cls_id = val_unseen_dataset.cls_id
-    # print('cfg.DATALOADER.TRAIN_X.BATCH_SIZE')
-    # print(cfg.DATALOADER.TRAIN_X.BATCH_SIZE)
-    # time.sleep(10)
-    #cfg.DATALOADER.TRAIN_X.BATCH_SIZE = 1
+
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1,
                                              shuffle=cfg.DATALOADER.TRAIN_X.SHUFFLE,
                                              num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
     # val_gzsi_loader = torch.utils.data.DataLoader(val_gzsi_dataset, batch_size=cfg.DATALOADER.VAL.BATCH_SIZE,
     #                                               shuffle=cfg.DATALOADER.VAL.SHUFFLE,
     #                                               num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
-    #cfg.DATALOADER.VAL_X.BATCH_SIZE= 1
+    
     val_unseen_loader = torch.utils.data.DataLoader(val_unseen_dataset, batch_size=1,
                                                     shuffle=cfg.DATALOADER.VAL.SHUFFLE,
                                                     num_workers=cfg.DATALOADER.NUM_WORKERS, pin_memory=True)
