@@ -71,8 +71,8 @@ def main():
     # print(classnames)
     #cls_id = {'train': train_cls_id, 'val_gzsi': val_gzsi_cls_id, 'val_unseen': val_unseen_cls_id}
     cls_id = {'train': train_cls_id, 'val_unseen': val_unseen_cls_id}
-    print('cls_id')
-    print(cls_id)
+    # print('cls_id')
+    # print(cls_id)
 
     test_split = cfg.DATASET.TEST_SPLIT
     # test_gzsl_split = cfg.DATASET.TEST_GZSL_SPLIT

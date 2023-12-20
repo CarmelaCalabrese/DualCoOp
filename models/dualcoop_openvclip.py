@@ -42,10 +42,7 @@ class TextEncoder(nn.Module):
         self.dtype = clip_model.dtype
 
     def forward(self, prompts, tokenized_prompts):
-        # print('prompts.size()')
-        # print(prompts.size())
-        # print('self.positional_embedding.size()')
-        # print(self.positional_embedding.size())
+
         x = prompts + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x)
@@ -128,16 +125,13 @@ class MLCPromptLearner(nn.Module):
         for p_pos, p_neg in zip(prompts_pos, prompts_neg):
             tokenized_prompts_pos.append(clip.tokenize(p_pos))
             tokenized_prompts_neg.append(clip.tokenize(p_neg))
-        print('tokenized_prompts_pos')
-        print(tokenized_prompts_pos)
+
         tokenized_prompts_pos = torch.cat(tokenized_prompts_pos)
         tokenized_prompts_neg = torch.cat(tokenized_prompts_neg)
         with torch.no_grad():
             embedding_pos = clip_model.token_embedding(tokenized_prompts_pos).type(dtype)
             embedding_neg = clip_model.token_embedding(tokenized_prompts_neg).type(dtype)
-        print('embedding_pos')
-        print(embedding_pos)
-        time.sleep(5)
+
 
 
         # These token vectors will be saved when in save_model(),
@@ -198,8 +192,6 @@ class MLCPromptLearner(nn.Module):
             ],
             dim=1,
         )
-        print('prompts_pos')
-        print(prompts_pos)
 
         prompts_neg = torch.cat(
             [
@@ -256,32 +248,41 @@ class DualCoop_openvclip(nn.Module):
 
         image = torch.cat(image)
         bz, channel_dim, clip_len, h, w = image.shape
-        print('bz, channel_dim, clip_len, h, w')
-        print(bz, channel_dim, clip_len, h, w)
-        time.sleep(10)
+        # print('bz, channel_dim, clip_len, h, w')
+        # print(bz, channel_dim, clip_len, h, w)
         image = image.permute(0, 2, 1, 3, 4)
         image = image.reshape(bz*clip_len, channel_dim, h, w)
         
 
         video_features = self.video_encoder.model.encode_image(image) #CARMELA ADDED
-        print('video_features')
-        print(video_features.size())
         # get text features
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         text_features = self.text_encoder(prompts, tokenized_prompts)
-        print('text_features')
-        print(text_features.size())
+        # print('text_features')
+        # print(text_features.size())
 
         # normalize features
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-        print('text_features_norm')
-        print(text_features.size())
         #image_features_norm = image_features / image_features.norm(dim=1, keepdim=True)
-        video_features_norm = video_features / video_features.norm(dim=-1, keepdim=True) #CARMELA ADDED
+        video_features = video_features / video_features.norm(dim=-1, keepdim=True) #CARMELA ADDED
 
         # Class-Specific Region Feature Aggregation
-        #output = 20 * F.conv1d(image_features_norm, text_features[:, :, None])
-        output = 20 * F.conv1d(video_features_norm, text_features[:, :, None]) #CARMELA ADDED
+        # torch.nn.functional.conv1d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1)
+        # input: The input tensor to be convolved. It should have three dimensions: (batch_size, in_channels, sequence_length).
+        # weight: The learnable weights of the convolution kernel. It should have three dimensions: (out_channels, in_channels, kernel_size).
+        
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        video_features = video_features.to(device)
+        text_features = text_features.to(device)
+
+        linear_layer = nn.Linear(1024, 512)
+        linear_layer = linear_layer.to(device)
+        text_features_reduced = linear_layer(text_features)
+
+        video_features = video_features.mean(0).reshape(1, -1)
+
+        #output = 20 * F.conv1d(image_features, text_features[:, :, None])
+        output = 20 * F.conv1d(video_features[:, :, None], text_features_reduced[:, :, None]) #CARMELA ADDED
         b, c, _ = output.shape
         output_half = output[:,  c // 2:]
         w_half = F.softmax(output_half, dim=-1)
@@ -325,17 +326,10 @@ class DualCoop_openvclip(nn.Module):
 
 
 def dualcoop_openvclip(cfg, openvclip_cfg, classnames, **kwargs):
-    print(f"Loading CLIP (backbone: {cfg.MODEL.BACKBONE.NAME})")
-    print('cfg.MODEL.BACKBONE.NAME')
-    print(cfg.MODEL.BACKBONE.NAME)
+
     clip_model = load_clip_to_cpu(cfg)
-    #exit()
     clip_model.float()
 
-    #time.sleep(3)
-    print('OpenVCLIP')
-    #test = test_net.test
-    #test(openvclip_cfg)
     openvclip_model = load_openvclip(openvclip_cfg)
 
     print("Building dualcoop_openvclip")

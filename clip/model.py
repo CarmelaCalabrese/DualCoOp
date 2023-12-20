@@ -549,14 +549,17 @@ class CLIP_conv_proj(nn.Module):
             attn_mask=self.build_attention_mask()
         )
 
-        # time.sleep(10)
+        # #time.sleep(10)
+        # print('CLIP model in DUALCOOP')
+        # print('VISION')
         # print('vision_patch_size, vision_width, vision_layers, vision_heads,embed_dim')
         # print(vision_patch_size, vision_width, vision_layers, vision_heads,embed_dim)
-        # time.sleep(10)
+        # #time.sleep(10)
+        # print('TEXT')
         # print('transformer_width, transformer_layers, transformer_heads')
         # print(transformer_width, transformer_layers, transformer_heads)
         # time.sleep(10)
-        # exit()
+        # #exit()
 
         self.vocab_size = vocab_size
         self.token_embedding = nn.Embedding(vocab_size, transformer_width)
@@ -629,7 +632,10 @@ class CLIP_conv_proj(nn.Module):
 
     def forward(self, image, text):
         image_features = self.encode_image(image)
+        print(image_features.size())
         text_features = self.encode_text(text)
+        print(text_features.size())
+        time.sleep(10)
 
         # normalized features
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)

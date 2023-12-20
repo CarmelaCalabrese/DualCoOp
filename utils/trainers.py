@@ -51,10 +51,12 @@ def train_classic_fc(data_loader, val_loader, model, optim, sched, scaler, args,
 
         sched.step()
 
-        losses.update(loss.item(), images.size(0))
+        #losses.update(loss.item(), images.size(0))
+        losses.update(loss.item(), len(images))
         pred = Softmax(output.detach())[:, 1, :]
         mAP_value = mAP(target.cpu().numpy(), pred.cpu().numpy())
-        mAP_batches.update(mAP_value, images.size(0))
+        #mAP_batches.update(mAP_value, images.size(0))
+        mAP_batches.update(mAP_value, len(images))
         batch_time.update(time.time()-end)
         end = time.time()
         if i % args.print_freq == 0:
@@ -108,11 +110,11 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
     # print('data_loader')
     # print(data_loader)
     for i,   (images, target) in enumerate(data_loader):
-        print('images')
-        print(images)
-        print('target')
-        print(target)
-        target = target.max(dim=1)[0]
+        #target = target.max(dim=1)[0] #???
+        target = target.view(-1)
+        target = target.numpy()
+        target = torch.from_numpy(target).long()
+        target = target[None, ]
         if torch.cuda.is_available():
             device = torch.device("cuda")
         else:
@@ -133,18 +135,22 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
 
         # compute output
         with autocast():
-            print('images prima di model')
-            print(images)
-            print('batch_cls_id_input')
-            print(batch_cls_id_input)
+            # print('batch_cls_id_input')
+            # print(batch_cls_id_input)
+            # time.sleep(10)
             output = model(images, batch_cls_id_input)
         # loss = args.loss_w * criterion(output, target)
         if cls_id is not None:
             # output = output[:, :, cls_id['train']]
             # target = target[:, cls_id['train']]
+            # print('target')
+            # print(target)
+            # time.sleep(10)
+            #target = target.tolist()
             target = target[:, batch_cls_id_input]
-        print('output.dim()')
-        print(output.dim())
+            #new = []
+            #new = [target[i] for i in batch_cls_id_input]
+            #target = torch.tensor(new)
         if output.dim() == 3:
             loss = args.loss_w * criterion(output, target)
         elif args.single_prompt == 'pos':
@@ -159,13 +165,15 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
         loss.backward()
         optim.step()
 
-        losses.update(loss.item(), images.size(0))
+        # losses.update(loss.item(), images.size(0))
+        losses.update(loss.item(), len(images))
         if output.dim() == 3:
             pred = Softmax(output.detach())[:, 1, :]
         else:
             pred = Sig(output.detach())
         mAP_value = mAP(target.cpu().numpy(), pred.cpu().numpy())
-        mAP_batches.update(mAP_value, images.size(0))
+        #mAP_batches.update(mAP_value, images.size(0))
+        mAP_batches.update(mAP_value, len(images))
         batch_time.update(time.time()-end)
         end = time.time()
         if i % args.print_freq == 0:
