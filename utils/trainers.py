@@ -107,9 +107,8 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
     criterion3 = AsymmetricLoss3(cfg.TRAINER.COOP_MLC.ASL_GAMMA_NEG, cfg.TRAINER.COOP_MLC.ASL_GAMMA_POS)
 
     end = time.time()
-    # print('data_loader')
-    # print(data_loader)
     for i,   (images, target) in enumerate(data_loader):
+
         #target = target.max(dim=1)[0] #???
         target = target.view(-1)
         target = target.numpy()
@@ -132,25 +131,17 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
                 batch_cls_id_input = cls_id['train']
         else:
             batch_cls_id_input = None
-
+        
         # compute output
         with autocast():
-            # print('batch_cls_id_input')
-            # print(batch_cls_id_input)
             # time.sleep(10)
             output = model(images, batch_cls_id_input)
         # loss = args.loss_w * criterion(output, target)
         if cls_id is not None:
             # output = output[:, :, cls_id['train']]
             # target = target[:, cls_id['train']]
-            # print('target')
-            # print(target)
-            # time.sleep(10)
             #target = target.tolist()
             target = target[:, batch_cls_id_input]
-            #new = []
-            #new = [target[i] for i in batch_cls_id_input]
-            #target = torch.tensor(new)
         if output.dim() == 3:
             loss = args.loss_w * criterion(output, target)
         elif args.single_prompt == 'pos':
@@ -177,6 +168,7 @@ def train_coop(data_loader, val_loaders, model, optim, sched, args, cfg, epoch, 
         batch_time.update(time.time()-end)
         end = time.time()
         if i % args.print_freq == 0:
+            print('Training in train_coop')
             print('Train: [{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {losses.val:.2f} ({losses.avg:.2f})\t'

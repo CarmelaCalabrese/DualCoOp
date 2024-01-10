@@ -54,8 +54,8 @@ def load_openvclip(cfg):
         cfg.TEST.NUM_ENSEMBLE_VIEWS = num_view
 
         # Print config.
-        logger.info("Test with config:")
-        logger.info(cfg)
+        #logger.info("Test with config:") #TODO: uncomment
+        #logger.info(cfg) #TODO: uncomment
         # Build the video model and print model statistics.
         model = build_model(cfg)
          
@@ -69,7 +69,6 @@ def load_openvclip(cfg):
                     custom_load_file
             ), "Checkpoint '{}' not found".format(custom_load_file)
             logger.info("Loading custom network weights from {}.".format(custom_load_file)) 
-            print('Sono qui')
             checkpoint = torch.load(custom_load_file, map_location='cpu')
             checkpoint_model = checkpoint['model_state']
             state_dict = model.state_dict()

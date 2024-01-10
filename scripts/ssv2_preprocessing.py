@@ -3,11 +3,13 @@ import numpy as np
 import os
 import argparse
 import pandas as pd
+import random
 
 def main():
     parser = argparse.ArgumentParser(prog="ssv2_preprocessing",
                                     description="Quick script to split something something dataset to suit zero shot learning")
-    parser.add_argument("--split",dest='split',action='store',default=0.2,type=float)
+    parser.add_argument("--split_val",dest='split_val',action='store',default=0.15,type=float)
+    parser.add_argument("--split_test",dest='split_test',action='store',default=0.15,type=float)
     parser.add_argument("--labels_dir",dest='labels_dir',action='store',default='./something-something-v2/labels')
     parser.add_argument("--video_dir",dest='video_dir',action='store',default='./something-something-v2/20bn-something-something-v2')
     #parser.add_argument("--frame_dir",dest='frame_dir',action='store',default='./something-something-v2/20bn-something-something-v2-frames')
@@ -31,23 +33,52 @@ def main():
 
     # Randomly split labels so that only (1-split) part of it is seen during training
     label_index = np.arange(0,len(label_dict),1)
+    print('len(label_index)')
+    print(len(label_index))
     np.random.shuffle(label_index)
-    train_labels_idxs = label_index[0:int((1-args.split)*len(label_dict))]
+    #train_labels_idxs = label_index[0:int((1-args.split)*len(label_dict))]
+    train_val_labels_idxs = label_index[0:int((1-args.split_test)*len(label_dict))]
+    train_labels_idxs = train_val_labels_idxs[0:int((1-args.split_val)*(1-args.split_test)*len(label_dict))]
     
+    train_val_labels = []
     train_labels = []
     val_labels = []
+    test_labels = []
 
     for label in label_dict:
-        if int(label_dict[label]) in train_labels_idxs:
-            train_labels.append(label)
+        if int(label_dict[label]) in train_val_labels_idxs:
+            if int(label_dict[label]) in train_labels_idxs:
+                train_labels.append(label)
+            else:
+                val_labels.append(label)
         else:
-            val_labels.append(label)
+            test_labels.append(label)
+
+    print('len(train_labels)')
+    print(len(train_labels))
+    print('len(val_labels)')
+    print(len(val_labels))
+    print('len(test_labels)')
+    print(len(test_labels))
+
+    train_labels = random.sample(train_labels, int(0.8*len(train_labels)))
+    val_labels = random.sample(val_labels, int(0.8*len(val_labels)))
+    test_labels = random.sample(test_labels, int(0.8*len(test_labels)))
+
+    print('len(train_labels)')
+    print(len(train_labels))
+    print('len(val_labels)')
+    print(len(val_labels))
+    print('len(test_labels)')
+    print(len(test_labels))
 
     train_json = []
     val_json = []
+    test_json = []
 
     train_video_desc = []
     val_video_desc = []
+    test_video_desc = []
 
     # To account for the possibility to have partial data only extract the available video ids from the directory
     all_videos_id = [f.split('.')[0] for f in os.listdir(args.video_dir)]
@@ -61,17 +92,20 @@ def main():
             if datum_label in train_labels:
                 train_json.append(datum)
                 extend_frame_desc_file(train_video_desc,datum,i,args)
-            else :
+            elif datum_label in val_labels:
                 val_json.append(datum)
                 extend_frame_desc_file(val_video_desc,datum,i,args)
+            else :
+                test_json.append(datum)
+                extend_frame_desc_file(test_video_desc,datum,i,args)
 
     cols = ['original_vido_id', 'video_id', 'frame_id', 'path', 'labels']
+
     train_video_desc_df = pd.DataFrame(train_video_desc) 
     train_video_desc_df.drop(columns=[0])
     train_video_desc_df.insert(loc=4, column= 4, value= '""')
     train_video_desc_df.columns = cols
     train_video_desc_df.to_csv('train.csv', sep=' ')
-    print(train_video_desc_df.loc[0])
 
     val_video_desc_df = pd.DataFrame(val_video_desc) 
     val_video_desc_df.drop(columns=[0])
@@ -79,8 +113,11 @@ def main():
     val_video_desc_df.columns = cols
     val_video_desc_df.to_csv('val.csv', sep=' ')
 
-    with open('preprocessed_val.json','w') as f: 
-        json.dump(val_json,f,indent="\t")
+    test_video_desc_df = pd.DataFrame(test_video_desc) 
+    test_video_desc_df.drop(columns=[0])
+    test_video_desc_df.insert(loc=4, column= 4, value= '""')
+    test_video_desc_df.columns = cols
+    test_video_desc_df.to_csv('test.csv', sep=' ')
 
     with open('preprocessed_train.json','w') as f:
         json.dump(train_json,f,indent="\t")
@@ -88,8 +125,17 @@ def main():
     with open('preprocessed_train_labels.json','w') as f:
         json.dump(train_labels,f,indent="\t")
 
+    with open('preprocessed_val.json','w') as f: 
+        json.dump(val_json,f,indent="\t")
+
     with open('preprocessed_val_labels.json','w') as f:
         json.dump(val_labels,f,indent="\t")
+
+    with open('preprocessed_test.json','w') as f: 
+        json.dump(test_json,f,indent="\t")
+
+    with open('preprocessed_test_labels.json','w') as f:
+        json.dump(test_labels,f,indent="\t")
 
 
 def extend_frame_desc_file(frame_desc_dict,datum,i,args):

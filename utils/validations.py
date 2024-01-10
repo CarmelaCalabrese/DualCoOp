@@ -26,7 +26,8 @@ def validate(data_loader, model, args):
                 device = torch.device("cuda")
             else:
                 device = torch.device("cpu")
-            images = images.to(device)
+            #images = images.to(device)
+            images = [img.to(device) for img in images]
 
             # compute output
             with autocast():
@@ -47,7 +48,8 @@ def validate(data_loader, model, args):
             fp += (pred - target).eq(1).sum(dim=0)
             fn += (pred - target).eq(-1).sum(dim=0)
             tn += (pred + target).eq(0).sum(dim=0)
-            count += images.size(0)
+            #count += images.size(0)
+            count += len(images)
 
             this_tp = (pred + target).eq(2).sum()
             this_fp = (pred - target).eq(1).sum()
@@ -59,8 +61,10 @@ def validate(data_loader, model, args):
             this_rec = this_tp.float() / (
                     this_tp + this_fn).float() * 100.0 if this_tp + this_fn != 0 else 0.0
 
-            prec.update(float(this_prec), images.size(0))
-            rec.update(float(this_rec), images.size(0))
+            #prec.update(float(this_prec), images.size(0))
+            #rec.update(float(this_rec), images.size(0))
+            prec.update(float(this_prec), len(images))
+            rec.update(float(this_rec), len(images))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
@@ -121,12 +125,19 @@ def validate_zsl(data_loader, model, args, cls_id):
     with torch.no_grad():
         end = time.time()
         for i,   (images, target) in enumerate(data_loader):
-            target = target.max(dim=1)[0]
+
+            #target = target.max(dim=1)[0]
+            target = target.view(-1)
+            target = target.numpy()
+            target = torch.from_numpy(target).long()
+            target = target[None, ]
+
             if torch.cuda.is_available():
                 device = torch.device("cuda")
             else:
                 device = torch.device("cpu")
-            images = images.to(device)
+            #images = images.to(device)
+            images = [img.to(device) for img in images]
 
             # compute output
             with autocast():
@@ -146,6 +157,7 @@ def validate_zsl(data_loader, model, args, cls_id):
             batch_time.update(time.time() - end)
             end = time.time()
             if i % args.print_freq == 0:
+                print('Test in validate_zsl')
                 print('Test: [{0}/{1}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'.format(
                     i, len(data_loader), batch_time=batch_time),
